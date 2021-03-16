@@ -1,0 +1,3 @@
+domain: giantswarm.io
+repo: github.com/giantswarm/dns-operator-aws
+version: "2"
