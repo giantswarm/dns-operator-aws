@@ -26,7 +26,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-  capa "sigs.k8s.io/cluster-api-provider-aws/api/v1alpha3"
+	capa "sigs.k8s.io/cluster-api-provider-aws/api/v1alpha3"
 
 	"github.com/giantswarm/dns-operator-aws/controllers"
 	// +kubebuilder:scaffold:imports
