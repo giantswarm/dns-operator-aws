@@ -20,15 +20,16 @@ import (
 	"context"
 
 	"github.com/giantswarm/dns-operator-aws/pkg/cloud/scope"
+	"github.com/giantswarm/dns-operator-aws/pkg/cloud/services/route53"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	cloudformation "github.com/giantswarm/dns-operator-aws/pkg/cloud/services/cloudformation"
 	capa "sigs.k8s.io/cluster-api-provider-aws/api/v1alpha3"
 )
 
@@ -38,6 +39,7 @@ const (
 	cacpReleaseComponent = "cluster-api-control-plane"
 	capaReleaseComponent = "cluster-api-provider-aws"
 	capzReleaseComponent = "cluster-api-provider-azure"
+	dnsFinalizerName     = "dns-operator-aws.finalizers.giantswarm.io"
 )
 
 // AWSClusterReconciler reconciles a AWSCluster object
@@ -92,9 +94,6 @@ func (r *AWSClusterReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 	if err != nil {
 		return reconcile.Result{}, errors.Errorf("failed to create scope: %+v", err)
 	}
-	if err != nil {
-		return reconcile.Result{}, errors.Errorf("failed to create scope: %+v", err)
-	}
 
 	// Handle deleted clusters
 	if !awsCluster.DeletionTimestamp.IsZero() {
@@ -112,21 +111,32 @@ func (r *AWSClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 func reconcileNormal(clusterScope *scope.ClusterScope) (reconcile.Result, error) {
+	clusterScope.Info("Reconciling AWSCluster normal")
+
+	awsCluster := clusterScope.AWSCluster
+	// If the AWSCluster doesn't have our finalizer, add it.
+	controllerutil.AddFinalizer(awsCluster, dnsFinalizerName)
+
+	route53Service := route53.NewService(clusterScope)
+	if err := route53Service.ReconcileRoute53(); err != nil {
+		clusterScope.Error(err, "error creating cloudformation stack")
+		return reconcile.Result{}, err
+	}
 	return reconcile.Result{}, nil
 }
 
 func reconcileDelete(clusterScope *scope.ClusterScope) (reconcile.Result, error) {
 	clusterScope.Info("Reconciling AWSCluster delete")
 
-	cfservice := cloudformation.NewService(clusterScope)
+	route53Service := route53.NewService(clusterScope)
 
-	if err := cfservice.DeleteStack(); err != nil {
+	if err := route53Service.DeleteRoute53(); err != nil {
 		clusterScope.Error(err, "error deleting cloudformation stack")
 		return reconcile.Result{}, err
 	}
 
 	// Cluster is deleted so remove the finalizer.
-	//controllerutil.RemoveFinalizer(clusterScope.AWSCluster, infrav1.ClusterFinalizer)
+	controllerutil.RemoveFinalizer(clusterScope.AWSCluster, dnsFinalizerName)
 
 	return reconcile.Result{}, nil
 }

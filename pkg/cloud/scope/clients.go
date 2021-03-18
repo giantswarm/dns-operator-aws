@@ -5,7 +5,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/route53"
-	"github.com/aws/aws-sdk-go/service/sts/stsiface"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/component-base/version"
 
@@ -14,10 +13,10 @@ import (
 	"github.com/giantswarm/dns-operator-aws/pkg/record"
 )
 
+// AWSClients contains all the aws clients used by the scopes
 type AWSClients struct {
 	CloudFormation *cloudformation.CloudFormation
 	Route53        *route53.Route53
-	STS            stsiface.STSAPI
 }
 
 // NewCloudFormationClient creates a new CloudFormation API client for a given session
@@ -28,6 +27,16 @@ func NewCloudFormationClient(session cloud.Session, target runtime.Object) *clou
 	CloudFormationClient.Handlers.Complete.PushBack(recordAWSPermissionsIssue(target))
 
 	return CloudFormationClient
+}
+
+// NewRoute53Client creates a new Route53 API client for a given session
+func NewRoute53Client(session cloud.Session, target runtime.Object) *route53.Route53 {
+	Route53Client := route53.New(session.Session())
+	Route53Client.Handlers.Build.PushFrontNamed(getUserAgentHandler())
+	Route53Client.Handlers.CompleteAttempt.PushFront(awsmetrics.CaptureRequestMetrics("dns-operator-aws"))
+	Route53Client.Handlers.Complete.PushBack(recordAWSPermissionsIssue(target))
+
+	return Route53Client
 }
 
 func getUserAgentHandler() request.NamedHandler {

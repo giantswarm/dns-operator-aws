@@ -65,3 +65,13 @@ func (s *ClusterScope) Region() string {
 func (s *ClusterScope) InfraCluster() cloud.ClusterObject {
 	return s.AWSCluster
 }
+
+// Name returns the AWS infrastructure cluster name.
+func (s *ClusterScope) Name() string {
+	return s.AWSCluster.Name
+}
+
+// APIEndpoint returns the AWS infrastructure Kubernetes API endpoint.
+func (s *ClusterScope) APIEndpoint() string {
+	return s.AWSCluster.Spec.ControlPlaneEndpoint.Host
+}

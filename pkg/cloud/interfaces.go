@@ -20,6 +20,13 @@ type ClusterObject interface {
 type ClusterScoper interface {
 	logr.Logger
 	Session
+
+	// Name returns the CAPI cluster name.
+	Name() string
 	// InfraCluster returns the AWS infrastructure cluster object.
 	InfraCluster() ClusterObject
+	// APIEndpoint returns the AWS infrastructure Kubernetes API endpoint.
+	APIEndpoint() string
+	// Region returns the AWS infrastructure cluster object region.
+	Region() string
 }
