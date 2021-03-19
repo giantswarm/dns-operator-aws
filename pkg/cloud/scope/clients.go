@@ -5,7 +5,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/request"
-	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/component-base/version"
@@ -17,18 +16,7 @@ import (
 
 // AWSClients contains all the aws clients used by the scopes
 type AWSClients struct {
-	CloudFormation *cloudformation.CloudFormation
-	Route53        *route53.Route53
-}
-
-// NewCloudFormationClient creates a new CloudFormation API client for a given session
-func NewCloudFormationClient(session cloud.Session, target runtime.Object) *cloudformation.CloudFormation {
-	CloudFormationClient := cloudformation.New(session.Session())
-	CloudFormationClient.Handlers.Build.PushFrontNamed(getUserAgentHandler())
-	CloudFormationClient.Handlers.CompleteAttempt.PushFront(awsmetrics.CaptureRequestMetrics("dns-operator-aws"))
-	CloudFormationClient.Handlers.Complete.PushBack(recordAWSPermissionsIssue(target))
-
-	return CloudFormationClient
+	Route53 *route53.Route53
 }
 
 // NewRoute53Client creates a new Route53 API client for a given session

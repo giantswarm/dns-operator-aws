@@ -66,21 +66,6 @@ func (r *AWSClusterReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 		}
 		return reconcile.Result{}, err
 	}
-	// Fetch the Cluster.
-	//cluster, err := util.GetOwnerCluster(ctx, r.Client, awsCluster.ObjectMeta)
-	//if err != nil {
-	//	return reconcile.Result{}, err
-	//}
-
-	//if cluster == nil {
-	//	log.Info("Cluster Controller has not yet set OwnerRef")
-	//	return reconcile.Result{}, nil
-	//}
-
-	//if util.IsPaused(cluster, awsCluster) {
-	//	log.Info("AWSCluster or linked Cluster is marked as paused. Won't reconcile")
-	//	return reconcile.Result{}, nil
-	//}
 
 	log = log.WithValues("cluster", awsCluster.Name)
 

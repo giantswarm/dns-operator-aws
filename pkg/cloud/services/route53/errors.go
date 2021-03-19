@@ -12,7 +12,7 @@ import (
 
 var _ error = &Route53Error{}
 
-// CloudFormationError is an error exposed to users of this library.
+// Route53Error is an error exposed to users of this library.
 type Route53Error struct {
 	msg string
 

@@ -12,7 +12,6 @@ import (
 
 // ClusterScopeParams defines the input parameters used to create a new Scope.
 type ClusterScopeParams struct {
-	Client     client.Client
 	Logger     logr.Logger
 	ARN        string
 	Region     string

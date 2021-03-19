@@ -10,7 +10,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// 🤷‍♂️
+// 🤷‍♂️ TODO(nick): this needs to be a flag
 var baseDomain = "gauss.eu-west-1.aws.gigantic.io"
 
 func (s *Service) DeleteRoute53() error {
