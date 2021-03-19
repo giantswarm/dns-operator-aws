@@ -16,7 +16,7 @@ type ClusterObject interface {
 	conditions.Setter
 }
 
-// ClusterScoper is the interface for a cluster scope
+// ClusterScoper is the interface for a workload cluster scope
 type ClusterScoper interface {
 	logr.Logger
 	Session
@@ -29,4 +29,16 @@ type ClusterScoper interface {
 	APIEndpoint() string
 	// Region returns the AWS infrastructure cluster object region.
 	Region() string
+	// ARN returns the assumed role.
+	ARN() string
+}
+
+// ManagementClusterScoper is the interface for a managemnt cluster scope
+type ManagementClusterScoper interface {
+	logr.Logger
+	Session
+	// InfraCluster returns the AWS infrastructure cluster object.
+	InfraCluster() ClusterObject
+	// ARN returns the assumed role.
+	ARN() string
 }

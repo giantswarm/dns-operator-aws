@@ -1,7 +1,9 @@
 package scope
 
 import (
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/route53"
@@ -30,8 +32,8 @@ func NewCloudFormationClient(session cloud.Session, target runtime.Object) *clou
 }
 
 // NewRoute53Client creates a new Route53 API client for a given session
-func NewRoute53Client(session cloud.Session, target runtime.Object) *route53.Route53 {
-	Route53Client := route53.New(session.Session())
+func NewRoute53Client(session cloud.Session, arn string, target runtime.Object) *route53.Route53 {
+	Route53Client := route53.New(session.Session(), &aws.Config{Credentials: stscreds.NewCredentials(session.Session(), arn)})
 	Route53Client.Handlers.Build.PushFrontNamed(getUserAgentHandler())
 	Route53Client.Handlers.CompleteAttempt.PushFront(awsmetrics.CaptureRequestMetrics("dns-operator-aws"))
 	Route53Client.Handlers.Complete.PushBack(recordAWSPermissionsIssue(target))

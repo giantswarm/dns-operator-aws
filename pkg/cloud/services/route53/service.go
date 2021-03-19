@@ -8,14 +8,18 @@ import (
 
 // Service holds a collection of interfaces.
 type Service struct {
-	scope         scope.Route53Scope
-	Route53Client route53iface.Route53API
+	scope                   scope.Route53Scope
+	managementScope         scope.ManagementRoute53Scope
+	Route53Client           route53iface.Route53API
+	ManagementRoute53Client route53iface.Route53API
 }
 
-// NewService returns a new service given the cloudformation api client.
-func NewService(clusterScope scope.Route53Scope) *Service {
+// NewService returns a new service given the route53 api client.
+func NewService(clusterScope scope.Route53Scope, managementScope scope.ManagementRoute53Scope) *Service {
 	return &Service{
-		scope:         clusterScope,
-		Route53Client: scope.NewRoute53Client(clusterScope, clusterScope.InfraCluster()),
+		scope:                   clusterScope,
+		managementScope:         managementScope,
+		Route53Client:           scope.NewRoute53Client(clusterScope, clusterScope.ARN(), clusterScope.InfraCluster()),
+		ManagementRoute53Client: scope.NewRoute53Client(managementScope, managementScope.ARN(), managementScope.InfraCluster()),
 	}
 }

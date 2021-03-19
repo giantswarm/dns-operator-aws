@@ -14,6 +14,7 @@ import (
 type ClusterScopeParams struct {
 	Client     client.Client
 	Logger     logr.Logger
+	ARN        string
 	Region     string
 	AWSCluster *infrav1.AWSCluster
 	Endpoints  []ServiceEndpoint
@@ -29,6 +30,9 @@ func NewClusterScope(params ClusterScopeParams) (*ClusterScope, error) {
 	if params.AWSCluster == nil {
 		return nil, errors.New("failed to generate new scope from nil AWSCluster")
 	}
+	if params.ARN == "" {
+		return nil, errors.New("failed to generate new scope from emtpy string ARN")
+	}
 
 	session, err := sessionForRegion(params.AWSCluster.Spec.Region, params.Endpoints)
 	if err != nil {
@@ -39,6 +43,7 @@ func NewClusterScope(params ClusterScopeParams) (*ClusterScope, error) {
 		Logger:     params.Logger,
 		client:     params.Client,
 		AWSCluster: params.AWSCluster,
+		assumeRole: params.ARN,
 		session:    session,
 	}, nil
 }
@@ -48,6 +53,7 @@ type ClusterScope struct {
 	logr.Logger
 	client     client.Client
 	AWSCluster *infrav1.AWSCluster
+	assumeRole string
 	session    awsclient.ConfigProvider
 }
 
@@ -69,6 +75,11 @@ func (s *ClusterScope) InfraCluster() cloud.ClusterObject {
 // Name returns the AWS infrastructure cluster name.
 func (s *ClusterScope) Name() string {
 	return s.AWSCluster.Name
+}
+
+// ARN returns the AWS SDK assumed role. Used for creating client
+func (s *ClusterScope) ARN() string {
+	return s.assumeRole
 }
 
 // APIEndpoint returns the AWS infrastructure Kubernetes API endpoint.

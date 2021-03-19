@@ -3,6 +3,7 @@ package route53
 import (
 	"net/http"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/giantswarm/dns-operator-aws/pkg/cloud/awserrors"
@@ -44,8 +45,11 @@ func IsNotFound(err error) bool {
 	if ReasonForError(err) == http.StatusNotFound {
 		return true
 	}
+	if err == aws.ErrMissingEndpoint {
+		return true
+	}
 	if code, ok := awserrors.Code(errors.Cause(err)); ok {
-		if code == route53.ErrCodeHostedZoneNotFound {
+		if code == route53.ErrCodeHostedZoneNotFound || code == route53.ErrCodeInvalidChangeBatch {
 			return true
 		}
 	}

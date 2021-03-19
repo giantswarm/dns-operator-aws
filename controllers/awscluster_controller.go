@@ -86,7 +86,18 @@ func (r *AWSClusterReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 
 	// Create the scope.
 	clusterScope, err := scope.NewClusterScope(scope.ClusterScopeParams{
-		Client:     r.Client,
+		ARN:        "arn:aws:iam::180547736195:role/GiantSwarmAWSOperator",
+		Logger:     log,
+		AWSCluster: awsCluster,
+		Endpoints:  r.Endpoints,
+	})
+	if err != nil {
+		return reconcile.Result{}, errors.Errorf("failed to create scope: %+v", err)
+	}
+
+	// Create the scope.
+	managementScope, err := scope.NewManagementClusterScope(scope.ManagementClusterScopeParams{
+		ARN:        "arn:aws:iam::822380749555:role/GiantSwarmAWSOperator",
 		Logger:     log,
 		AWSCluster: awsCluster,
 		Endpoints:  r.Endpoints,
@@ -97,11 +108,11 @@ func (r *AWSClusterReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 
 	// Handle deleted clusters
 	if !awsCluster.DeletionTimestamp.IsZero() {
-		return reconcileDelete(clusterScope)
+		return reconcileDelete(clusterScope, managementScope)
 	}
 
 	// Handle non-deleted clusters
-	return reconcileNormal(clusterScope)
+	return reconcileNormal(clusterScope, managementScope)
 }
 
 func (r *AWSClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
@@ -110,28 +121,28 @@ func (r *AWSClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func reconcileNormal(clusterScope *scope.ClusterScope) (reconcile.Result, error) {
+func reconcileNormal(clusterScope *scope.ClusterScope, managementScope *scope.ManagementClusterScope) (reconcile.Result, error) {
 	clusterScope.Info("Reconciling AWSCluster normal")
 
 	awsCluster := clusterScope.AWSCluster
 	// If the AWSCluster doesn't have our finalizer, add it.
 	controllerutil.AddFinalizer(awsCluster, dnsFinalizerName)
 
-	route53Service := route53.NewService(clusterScope)
+	route53Service := route53.NewService(clusterScope, managementScope)
 	if err := route53Service.ReconcileRoute53(); err != nil {
-		clusterScope.Error(err, "error creating cloudformation stack")
+		clusterScope.Error(err, "error creating route53")
 		return reconcile.Result{}, err
 	}
 	return reconcile.Result{}, nil
 }
 
-func reconcileDelete(clusterScope *scope.ClusterScope) (reconcile.Result, error) {
+func reconcileDelete(clusterScope *scope.ClusterScope, managementScope *scope.ManagementClusterScope) (reconcile.Result, error) {
 	clusterScope.Info("Reconciling AWSCluster delete")
 
-	route53Service := route53.NewService(clusterScope)
+	route53Service := route53.NewService(clusterScope, managementScope)
 
 	if err := route53Service.DeleteRoute53(); err != nil {
-		clusterScope.Error(err, "error deleting cloudformation stack")
+		clusterScope.Error(err, "error deleting route53")
 		return reconcile.Result{}, err
 	}
 

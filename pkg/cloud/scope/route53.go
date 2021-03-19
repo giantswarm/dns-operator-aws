@@ -8,3 +8,7 @@ import (
 type Route53Scope interface {
 	cloud.ClusterScoper
 }
+
+type ManagementRoute53Scope interface {
+	cloud.ManagementClusterScoper
+}
