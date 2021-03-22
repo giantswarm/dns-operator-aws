@@ -19,8 +19,6 @@ package controllers
 import (
 	"context"
 
-	"github.com/giantswarm/dns-operator-aws/pkg/cloud/scope"
-	"github.com/giantswarm/dns-operator-aws/pkg/cloud/services/route53"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -29,6 +27,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	"github.com/giantswarm/dns-operator-aws/pkg/cloud/scope"
+	"github.com/giantswarm/dns-operator-aws/pkg/cloud/services/route53"
 
 	capa "sigs.k8s.io/cluster-api-provider-aws/api/v1alpha3"
 )
