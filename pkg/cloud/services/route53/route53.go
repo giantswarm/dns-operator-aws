@@ -22,10 +22,12 @@ func (s *Service) DeleteRoute53() error {
 		return err
 	}
 
+	// First delete delegation record from managament
 	if err := s.changeManagementClusterDelegation("DELETE"); err != nil {
 		return err
 	}
 
+	// We need to delete all records first before we can delete the hosted zone
 	if err := s.changeWorkloadClusterRecords("DELETE"); err != nil {
 		return err
 	}
@@ -55,7 +57,7 @@ func (s *Service) ReconcileRoute53() error {
 
 	err = s.changeWorkloadClusterRecords("CREATE")
 	if IsNotFound(err) {
-		// fall trough
+		// fall through
 	} else if err != nil {
 		return err
 	}
@@ -71,6 +73,7 @@ func (s *Service) ReconcileRoute53() error {
 }
 
 func (s *Service) describeWorkloadClusterZone() (string, error) {
+	// Search host zone by DNSName
 	input := &route53.ListHostedZonesByNameInput{
 		DNSName: aws.String(fmt.Sprintf("%s.k8s.%s", s.scope.Name(), baseDomain)),
 	}
@@ -95,7 +98,7 @@ func (s *Service) listWorkloadClusterNSRecords() ([]*route53.ResourceRecord, err
 		return nil, err
 	}
 
-	// first entry is always NS record
+	// First entry is always NS record
 	input := &route53.ListResourceRecordSetsInput{
 		HostedZoneId: aws.String(hostZoneID),
 		MaxItems:     aws.String("1"),
