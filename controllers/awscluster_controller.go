@@ -36,7 +36,7 @@ import (
 
 const (
 	CAPIWatchFilterLabel = "cluster.x-k8s.io/watch-filter"
-	capaReleaseComponent = "cluster-api-provider-aws"
+	CAPAReleaseComponent = "cluster-api-provider-aws"
 	dnsFinalizerName     = "dns-operator-aws.finalizers.giantswarm.io"
 )
 
