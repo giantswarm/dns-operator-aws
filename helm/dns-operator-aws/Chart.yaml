@@ -1,0 +1,8 @@
+name: dns-operator-aws
+version: [[ .Version ]]
+description: "Operator for managing DNS zones and records for CAPA clusters"
+appVersion: "[[ .AppVersion ]]"
+home: "https://github.com/giantswarm/dns-operator-aws"
+apiVersion: v1
+annotations:
+  application.giantswarm.io/team: "firecracker"

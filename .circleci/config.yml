@@ -1,0 +1,43 @@
+version: 2.1
+
+orbs:
+  architect: giantswarm/architect@2.2.0
+
+workflows:
+  build:
+    jobs:
+    - architect/go-build:
+        context: architect
+        name: go-build
+        binary: dns-operator-aws
+        filters:
+          tags:
+            only: /^v.*/
+
+    - architect/push-to-docker:
+        context: architect
+        name: push-dns-operator-aws-to-quay
+        image: "quay.io/giantswarm/dns-operator-aws"
+        username_envar: "QUAY_USERNAME"
+        password_envar: "QUAY_PASSWORD"
+        requires:
+        - go-build
+        filters:
+          # Trigger the job also on git tag.
+          tags:
+            only: /^v.*/
+
+    # Ensure that for every commit
+    # there is an app version in the test catalog.
+    - architect/push-to-app-catalog:
+        context: architect
+        name: push-to-app-catalog
+        app_catalog: "control-plane-test-catalog"
+        app_catalog_test: "control-plane-test-catalog"
+        chart: "dns-operator-aws"
+        requires:
+        - push-dns-operator-aws-to-quay
+        filters:
+          # Trigger the job also on git tag.
+          tags:
+            only: /^v.*/

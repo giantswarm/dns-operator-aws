@@ -16,3 +16,8 @@ require (
 	sigs.k8s.io/cluster-api-provider-aws v0.6.4
 	sigs.k8s.io/controller-runtime v0.5.14
 )
+
+replace (
+	github.com/coreos/etcd v3.3.10+incompatible => github.com/coreos/etcd v3.3.25+incompatible
+	github.com/gorilla/websocket v1.4.0 => github.com/gorilla/websocket v1.4.2
+)
