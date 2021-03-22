@@ -21,24 +21,30 @@ type ClusterScoper interface {
 	logr.Logger
 	Session
 
-	// Name returns the CAPI cluster name.
-	Name() string
+	// ARN returns the workload cluster assumed role to operate.
+	ARN() string
+	// APIEndpoint returns the AWS infrastructure Kubernetes LoadBalancer API endpoint.
+	// e.g. apiserver-x.eu-central-1.elb.amazonaws.com
+	APIEndpoint() string
+	// BaseDomain returns workload cluster domain. This could be the same domain like management cluster or something a different one.
+	BaseDomain() string
 	// InfraCluster returns the AWS infrastructure cluster object.
 	InfraCluster() ClusterObject
-	// APIEndpoint returns the AWS infrastructure Kubernetes API endpoint.
-	APIEndpoint() string
+	// Name returns the CAPI cluster name.
+	Name() string
 	// Region returns the AWS infrastructure cluster object region.
 	Region() string
-	// ARN returns the assumed role.
-	ARN() string
 }
 
 // ManagementClusterScoper is the interface for a managemnt cluster scope
 type ManagementClusterScoper interface {
 	logr.Logger
 	Session
+
+	// ARN returns the management cluster assumed role to operate.
+	ARN() string
+	// BaseDomain returns the management cluster domain which is used for workload cluster zone delegatation.
+	BaseDomain() string
 	// InfraCluster returns the AWS infrastructure cluster object.
 	InfraCluster() ClusterObject
-	// ARN returns the assumed role.
-	ARN() string
 }

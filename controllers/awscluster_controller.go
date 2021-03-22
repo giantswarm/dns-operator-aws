@@ -35,20 +35,20 @@ import (
 
 const (
 	CAPIWatchFilterLabel = "cluster.x-k8s.io/watch-filter"
-	capiReleaseComponent = "cluster-api-core"
-	cacpReleaseComponent = "cluster-api-control-plane"
 	capaReleaseComponent = "cluster-api-provider-aws"
-	capzReleaseComponent = "cluster-api-provider-azure"
 	dnsFinalizerName     = "dns-operator-aws.finalizers.giantswarm.io"
 )
 
 // AWSClusterReconciler reconciles a AWSCluster object
 type AWSClusterReconciler struct {
-	awsClients scope.AWSClients
 	client.Client
-	Log       logr.Logger
-	Scheme    *runtime.Scheme
-	Endpoints []scope.ServiceEndpoint
+
+	Log                         logr.Logger
+	ManagementClusterARN        string
+	ManagementClusterBaseDomain string
+	WorkloadClusterARN          string
+	WorkloadClusterBaseDomain   string
+	Scheme                      *runtime.Scheme
 }
 
 // +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=awsclusters,verbs=get;list;watch;create;update;patch;delete
@@ -69,23 +69,27 @@ func (r *AWSClusterReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 
 	log = log.WithValues("cluster", awsCluster.Name)
 
-	// Create the scope.
+	// Create the workload cluster scope.
 	clusterScope, err := scope.NewClusterScope(scope.ClusterScopeParams{
-		ARN:        "arn:aws:iam::180547736195:role/GiantSwarmAWSOperator",
+		// "arn:aws:iam::180547736195:role/GiantSwarmAWSOperator",
+		ARN: r.WorkloadClusterARN,
+		// "gauss.eu-west-1.aws.gigantic.io"
+		BaseDomain: r.WorkloadClusterBaseDomain,
 		Logger:     log,
 		AWSCluster: awsCluster,
-		Endpoints:  r.Endpoints,
 	})
 	if err != nil {
 		return reconcile.Result{}, errors.Errorf("failed to create scope: %+v", err)
 	}
 
-	// Create the scope.
+	// Create the management cluster scope.
 	managementScope, err := scope.NewManagementClusterScope(scope.ManagementClusterScopeParams{
-		ARN:        "arn:aws:iam::822380749555:role/GiantSwarmAWSOperator",
+		// "arn:aws:iam::822380749555:role/GiantSwarmAWSOperator",
+		ARN: r.ManagementClusterARN,
+		// "gauss.eu-west-1.aws.gigantic.io"
+		BaseDomain: r.ManagementClusterBaseDomain,
 		Logger:     log,
 		AWSCluster: awsCluster,
-		Endpoints:  r.Endpoints,
 	})
 	if err != nil {
 		return reconcile.Result{}, errors.Errorf("failed to create scope: %+v", err)
@@ -110,7 +114,7 @@ func reconcileNormal(clusterScope *scope.ClusterScope, managementScope *scope.Ma
 	clusterScope.Info("Reconciling AWSCluster normal")
 
 	awsCluster := clusterScope.AWSCluster
-	// If the AWSCluster doesn't have our finalizer, add it.
+	// If the AWSCluster doesn't have the finalizer, add it.
 	controllerutil.AddFinalizer(awsCluster, dnsFinalizerName)
 
 	route53Service := route53.NewService(clusterScope, managementScope)
@@ -131,7 +135,7 @@ func reconcileDelete(clusterScope *scope.ClusterScope, managementScope *scope.Ma
 		return reconcile.Result{}, err
 	}
 
-	// Cluster is deleted so remove the finalizer.
+	// AWSCluster is deleted so remove the finalizer.
 	controllerutil.RemoveFinalizer(clusterScope.AWSCluster, dnsFinalizerName)
 
 	return reconcile.Result{}, nil
