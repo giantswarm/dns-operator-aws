@@ -2,11 +2,12 @@ package scope
 
 import (
 	awsclient "github.com/aws/aws-sdk-go/aws/client"
-	"github.com/giantswarm/dns-operator-aws/pkg/cloud"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	"k8s.io/klog/klogr"
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/api/v1alpha3"
+
+	"github.com/giantswarm/dns-operator-aws/pkg/cloud"
 )
 
 // ClusterScopeParams defines the input parameters used to create a new Scope.
