@@ -1,10 +1,9 @@
-
 ---
-  provider:
-    region: ""
-  accessKeyID: ""
-  secretAccessKey: ""
-  managementClusterBaseDomain: ""
-  managementClusterRole: ""
-  workloadClusterBaseDomain: ""
-  workloadClusterRole: ""
+provider:
+  region: ""
+accessKeyID: ""
+secretAccessKey: ""
+managementClusterBaseDomain: ""
+managementClusterRole: ""
+workloadClusterBaseDomain: ""
+workloadClusterRole: ""
