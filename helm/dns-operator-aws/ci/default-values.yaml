@@ -1,6 +1,5 @@
 ---
-provider:
-  region: ""
+region: ""
 accessKeyID: ""
 secretAccessKey: ""
 managementClusterBaseDomain: ""
