@@ -76,6 +76,7 @@ func (r *AWSClusterReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 	// Fetch the Cluster.
 	cluster, err := util.GetOwnerCluster(ctx, r.Client, awsCluster.ObjectMeta)
 	if err != nil {
+		log.Info("Did not find anything :(")
 		return reconcile.Result{}, nil
 	}
 	if cluster == nil {
