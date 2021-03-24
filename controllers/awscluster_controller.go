@@ -23,6 +23,10 @@ import (
 	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	capi "sigs.k8s.io/cluster-api/api/v1alpha3"
+	"sigs.k8s.io/cluster-api/util"
+	"sigs.k8s.io/cluster-api/util/annotations"
+	"sigs.k8s.io/cluster-api/util/conditions"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -35,9 +39,10 @@ import (
 )
 
 const (
-	CAPIWatchFilterLabel = "cluster.x-k8s.io/watch-filter"
-	CAPAReleaseComponent = "cluster-api-provider-aws"
-	dnsFinalizerName     = "dns-operator-aws.finalizers.giantswarm.io"
+	CAPIWatchFilterLabel                    = "cluster.x-k8s.io/watch-filter"
+	CAPAReleaseComponent                    = "cluster-api-provider-aws"
+	dnsFinalizerName                        = "dns-operator-aws.finalizers.giantswarm.io"
+	DNSZoneReady         capi.ConditionType = "DNSZoneReady"
 )
 
 // AWSClusterReconciler reconciles a AWSCluster object
@@ -68,13 +73,27 @@ func (r *AWSClusterReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 		return reconcile.Result{}, err
 	}
 
+	// Fetch the Cluster.
+	cluster, err := util.GetOwnerCluster(ctx, r.Client, awsCluster.ObjectMeta)
+	if err != nil {
+		return reconcile.Result{}, nil
+	}
+	if cluster == nil {
+		log.Info("Cluster Controller has not yet set OwnerRef")
+		return reconcile.Result{}, err
+	}
+
 	log = log.WithValues("cluster", awsCluster.Name)
+
+	// Return early if the object or Cluster is paused.
+	if annotations.IsPaused(cluster, awsCluster) {
+		log.Info("AWSCluster or linked Cluster is marked as paused. Won't reconcile")
+		return ctrl.Result{}, nil
+	}
 
 	// Create the workload cluster scope.
 	clusterScope, err := scope.NewClusterScope(scope.ClusterScopeParams{
-		// "arn:aws:iam::180547736195:role/GiantSwarmAWSOperator",
-		ARN: r.WorkloadClusterARN,
-		// "gauss.eu-west-1.aws.gigantic.io"
+		ARN:        r.WorkloadClusterARN,
 		BaseDomain: r.WorkloadClusterBaseDomain,
 		Logger:     log,
 		AWSCluster: awsCluster,
@@ -85,9 +104,7 @@ func (r *AWSClusterReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 
 	// Create the management cluster scope.
 	managementScope, err := scope.NewManagementClusterScope(scope.ManagementClusterScopeParams{
-		// "arn:aws:iam::822380749555:role/GiantSwarmAWSOperator",
-		ARN: r.ManagementClusterARN,
-		// "gauss.eu-west-1.aws.gigantic.io"
+		ARN:        r.ManagementClusterARN,
 		BaseDomain: r.ManagementClusterBaseDomain,
 		Logger:     log,
 		AWSCluster: awsCluster,
@@ -98,11 +115,11 @@ func (r *AWSClusterReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 
 	// Handle deleted clusters
 	if !awsCluster.DeletionTimestamp.IsZero() {
-		return reconcileDelete(clusterScope, managementScope)
+		return r.reconcileDelete(ctx, clusterScope, managementScope)
 	}
 
 	// Handle non-deleted clusters
-	return reconcileNormal(clusterScope, managementScope)
+	return r.reconcileNormal(ctx, clusterScope, managementScope)
 }
 
 func (r *AWSClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
@@ -111,7 +128,7 @@ func (r *AWSClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func reconcileNormal(clusterScope *scope.ClusterScope, managementScope *scope.ManagementClusterScope) (reconcile.Result, error) {
+func (r *AWSClusterReconciler) reconcileNormal(ctx context.Context, clusterScope *scope.ClusterScope, managementScope *scope.ManagementClusterScope) (reconcile.Result, error) {
 	clusterScope.Info("Reconciling AWSCluster normal")
 
 	awsCluster := clusterScope.AWSCluster
@@ -123,10 +140,17 @@ func reconcileNormal(clusterScope *scope.ClusterScope, managementScope *scope.Ma
 		clusterScope.Error(err, "error creating route53")
 		return reconcile.Result{}, err
 	}
+
+	conditions.MarkTrue(awsCluster, DNSZoneReady)
+	err := r.Client.Status().Update(ctx, awsCluster)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
 	return reconcile.Result{}, nil
 }
 
-func reconcileDelete(clusterScope *scope.ClusterScope, managementScope *scope.ManagementClusterScope) (reconcile.Result, error) {
+func (r *AWSClusterReconciler) reconcileDelete(ctx context.Context, clusterScope *scope.ClusterScope, managementScope *scope.ManagementClusterScope) (reconcile.Result, error) {
 	clusterScope.Info("Reconciling AWSCluster delete")
 
 	route53Service := route53.NewService(clusterScope, managementScope)

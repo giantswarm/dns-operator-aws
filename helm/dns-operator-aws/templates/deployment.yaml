@@ -31,19 +31,21 @@ spec:
           - name: AWS_PROFILE
             value: default
           - name: AWS_REGION
-            value: {{ .Values.region }}
+            value: {{ .Values.managementClusterRegion }}
           - name: AWS_ACCESS_KEY_ID
             value: {{ .Values.accessKeyID }}
           - name: AWS_SECRET_ACCESS_KEY
             value: {{ .Values.secretAccessKey }}
-          - name: MANAGEMENT_CLUSTER_BASEDOMAIN
-            value: {{ .Values.managementClusterBaseDomain }}
           - name: MANAGEMENT_CLUSTER_ARN
             value: {{ .Values.managementClusterRole }}
-          - name: WORKLOAD_CLUSTER_BASEDOMAIN
-            value: {{ .Values.workloadClusterBaseDomain }}
+          - name: MANAGEMENT_CLUSTER_BASEDOMAIN
+            value: {{ .Values.managementClusterBaseDomain }}
+          - name: MANAGEMENT_CLUSTER_REGION
+            value: {{ .Values.managementClusterRegion }}
           - name: WORKLOAD_CLUSTER_ARN
             value: {{ .Values.workloadClusterRole }}
+          - name: WORKLOAD_CLUSTER_BASEDOMAIN
+            value: {{ .Values.workloadClusterBaseDomain }}
         command:
         - /manager
         args:
