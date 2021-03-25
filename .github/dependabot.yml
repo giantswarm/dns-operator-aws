@@ -4,6 +4,14 @@
 #
 version: 2
 updates:
+  - package-ecosystem: docker
+    directory: "/"
+    schedule:
+      interval: weekly
+      time: "04:00"
+    open-pull-requests-limit: 10
+    reviewers:
+      - giantswarm/team-firecracker-engineers
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
@@ -14,3 +22,15 @@ updates:
       - giantswarm/team-firecracker-engineers
     ignore:
       - dependency-name: zricethezav/gitleaks-action
+  - package-ecosystem: gomod
+    directory: "/"
+    schedule:
+      interval: weekly
+      time: "04:00"
+    open-pull-requests-limit: 10
+    reviewers:
+      - giantswarm/team-firecracker-engineers
+    ignore:
+      - dependency-name: k8s.io/*
+        versions:
+          - ">=0.19.0"
