@@ -27,6 +27,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	capa "sigs.k8s.io/cluster-api-provider-aws/api/v1alpha3"
+	capi "sigs.k8s.io/cluster-api/api/v1alpha3"
 
 	"github.com/giantswarm/dns-operator-aws/controllers"
 	// +kubebuilder:scaffold:imports
@@ -41,6 +42,7 @@ func init() {
 	_ = clientgoscheme.AddToScheme(scheme)
 
 	_ = capa.AddToScheme(scheme)
+	_ = capi.AddToScheme(scheme)
 	// +kubebuilder:scaffold:scheme
 }
 

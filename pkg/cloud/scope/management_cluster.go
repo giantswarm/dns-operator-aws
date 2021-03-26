@@ -1,6 +1,8 @@
 package scope
 
 import (
+	"os"
+
 	awsclient "github.com/aws/aws-sdk-go/aws/client"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
@@ -35,7 +37,11 @@ func NewManagementClusterScope(params ManagementClusterScopeParams) (*Management
 		params.Logger = klogr.New()
 	}
 
-	session, err := sessionForRegion(params.AWSCluster.Spec.Region)
+	region := params.AWSCluster.Spec.Region
+	if env := os.Getenv("MANAGEMENT_CLUSTER_REGION"); env != "" {
+		region = env
+	}
+	session, err := sessionForRegion(region)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create aws session")
 	}

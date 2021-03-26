@@ -1,0 +1,8 @@
+---
+accessKeyID: ""
+secretAccessKey: ""
+managementClusterBaseDomain: ""
+managementClusterRole: ""
+managementClusterRegion: ""
+workloadClusterBaseDomain: ""
+workloadClusterRole: ""
