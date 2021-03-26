@@ -30,7 +30,7 @@ workflows:
 
     # Ensure that for every commit to master, and for every new release tag,
     # an image gets pushed to the Aliyun registry.
-    - architect/push-to-aliyun:
+    - architect/push-to-docker:
         name: push-to-aliyun
         image: "registry-intl.cn-shanghai.aliyuncs.com/giantswarm/dns-operator-aws"
         username_envar: "ALIYUN_USERNAME"
