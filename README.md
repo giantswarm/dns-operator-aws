@@ -2,7 +2,7 @@
 
 The `dns-operator-aws` manages DNS host zones for workload clusters and takes care of DNS delegation inside the management cluster AWS account for each workload cluster DNS host zone.
 
-> :info: Currently `dns-operator-aws` only supports a public DNS host zone and it can only handle workload clusters within the same AWS account per management cluster. Once `PrincipalRef` is merged into `cluster-api-provider-aws` it will be possible to create DNS host zones in different AWS accounts.
+> ℹ️ Currently `dns-operator-aws` only supports a public DNS host zone and it can only handle workload clusters within the same AWS account per management cluster. Once `PrincipalRef` is merged into `cluster-api-provider-aws` it will be possible to create DNS host zones in different AWS accounts.
 
 #### How to run it locally
 
