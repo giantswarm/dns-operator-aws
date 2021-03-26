@@ -56,7 +56,7 @@ workflows:
             ignore: master
           tags:
             ignore: /^v.*/
-    - architect/push-to-aliyun:
+    - architect/push-to-docker:
         name: push-to-aliyun-pr
         image: "registry-intl.cn-shanghai.aliyuncs.com/giantswarm/dns-operator-aws"
         username_envar: "ALIYUN_USERNAME"
