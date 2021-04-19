@@ -12,7 +12,7 @@ require (
 	k8s.io/client-go v0.17.9
 	k8s.io/component-base v0.17.9
 	k8s.io/klog v1.0.0
-	sigs.k8s.io/cluster-api v0.3.15
+	sigs.k8s.io/cluster-api v0.3.16
 	sigs.k8s.io/cluster-api-provider-aws v0.6.4
 	sigs.k8s.io/controller-runtime v0.5.14
 )
