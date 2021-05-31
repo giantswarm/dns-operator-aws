@@ -3,7 +3,7 @@ module github.com/giantswarm/dns-operator-aws
 go 1.13
 
 require (
-	github.com/aws/aws-sdk-go v1.38.40
+	github.com/aws/aws-sdk-go v1.38.51
 	github.com/go-logr/logr v0.1.0
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.7.1
@@ -13,7 +13,7 @@ require (
 	k8s.io/component-base v0.17.9
 	k8s.io/klog v1.0.0
 	sigs.k8s.io/cluster-api v0.3.16
-	sigs.k8s.io/cluster-api-provider-aws v0.6.5
+	sigs.k8s.io/cluster-api-provider-aws v0.6.6
 	sigs.k8s.io/controller-runtime v0.5.14
 )
 
