@@ -16,6 +16,7 @@
       "groupName": "etc modules"
     }
   ],
+  "reviewers": ["team:giantswarm/team-firecracker-engineers"],
   "postUpdateOptions": ["gomodTidy", "gomodUpdateImportPaths"],
   "schedule": ["after 9am on thursday"]
 }
