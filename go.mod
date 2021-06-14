@@ -6,7 +6,7 @@ require (
 	github.com/aws/aws-sdk-go v1.38.55
 	github.com/go-logr/logr v0.1.0
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang v1.7.1
+	github.com/prometheus/client_golang v1.11.0
 	k8s.io/api v0.17.9
 	k8s.io/apimachinery v0.17.9
 	k8s.io/client-go v0.17.9
