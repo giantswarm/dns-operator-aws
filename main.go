@@ -50,7 +50,6 @@ func main() {
 	var (
 		enableLeaderElection        bool
 		metricsAddr                 string
-		workloadClusterARN          string
 		workloadClusterBaseDomain   string
 		managementClusterARN        string
 		managementClusterBaseDomain string
@@ -62,7 +61,6 @@ func main() {
 
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
 
-	flag.StringVar(&workloadClusterARN, "workload-cluster-arn", "", "Assumed role name for workload cluster DNS zone operation.")
 	flag.StringVar(&workloadClusterBaseDomain, "workload-cluster-basedomain", "", "Domain for workload cluster, e.g. installation.eu-west-1.aws.domain.tld")
 	flag.StringVar(&managementClusterARN, "management-cluster-arn", "", "Assumed role name for management cluster DNS zone delegation operation.")
 	flag.StringVar(&managementClusterBaseDomain, "management-cluster-basedomain", "", "Domain for management cluster, e.g. installation.eu-west-1.aws.domain.tld.")
@@ -89,7 +87,6 @@ func main() {
 		ManagementClusterARN:        managementClusterARN,
 		ManagementClusterBaseDomain: managementClusterBaseDomain,
 		WorkloadClusterBaseDomain:   workloadClusterBaseDomain,
-		WorkloadClusterARN:          workloadClusterARN,
 		Scheme:                      mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "AWSCluster")

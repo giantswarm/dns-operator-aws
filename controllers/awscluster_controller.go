@@ -23,6 +23,7 @@ import (
 	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	capi "sigs.k8s.io/cluster-api/api/v1alpha3"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/annotations"
@@ -52,7 +53,6 @@ type AWSClusterReconciler struct {
 	Log                         logr.Logger
 	ManagementClusterARN        string
 	ManagementClusterBaseDomain string
-	WorkloadClusterARN          string
 	WorkloadClusterBaseDomain   string
 	Scheme                      *runtime.Scheme
 }
@@ -91,9 +91,24 @@ func (r *AWSClusterReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 		return ctrl.Result{}, nil
 	}
 
+	var workloadClusterRole string
+	if awsCluster.Spec.IdentityRef.Kind == "AWSClusterRoleIdentity" {
+		workloadClusterRole = awsCluster.Spec.IdentityRef.Name
+	}
+
+	awsClusterRoleIdentityReq := types.NamespacedName{Name: workloadClusterRole, Namespace: req.Namespace}
+	awsClusterRoleIdentity := &capa.AWSClusterRoleIdentity{}
+	err = r.Get(ctx, awsClusterRoleIdentityReq, awsClusterRoleIdentity)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return reconcile.Result{}, nil
+		}
+		return reconcile.Result{}, err
+	}
+
 	// Create the workload cluster scope.
 	clusterScope, err := scope.NewClusterScope(scope.ClusterScopeParams{
-		ARN:        r.WorkloadClusterARN,
+		ARN:        awsClusterRoleIdentity.Spec.RoleArn,
 		BaseDomain: r.WorkloadClusterBaseDomain,
 		Logger:     log,
 		AWSCluster: awsCluster,
