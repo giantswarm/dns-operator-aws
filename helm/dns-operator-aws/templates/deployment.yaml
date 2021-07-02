@@ -42,8 +42,6 @@ spec:
             value: {{ .Values.managementClusterBaseDomain }}
           - name: MANAGEMENT_CLUSTER_REGION
             value: {{ .Values.managementClusterRegion }}
-          - name: WORKLOAD_CLUSTER_ARN
-            value: {{ .Values.workloadClusterRole }}
           - name: WORKLOAD_CLUSTER_BASEDOMAIN
             value: {{ .Values.workloadClusterBaseDomain }}
         command:
@@ -53,7 +51,6 @@ spec:
         - --management-cluster-basedomain=$(MANAGEMENT_CLUSTER_BASEDOMAIN)
         - --management-cluster-arn=$(MANAGEMENT_CLUSTER_ARN)
         - --workload-cluster-basedomain=$(WORKLOAD_CLUSTER_BASEDOMAIN)
-        - --workload-cluster-arn=$(WORKLOAD_CLUSTER_ARN)
         resources:
           requests:
             cpu: 100m
