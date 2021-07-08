@@ -9,6 +9,7 @@ rules:
   - cluster.x-k8s.io
   - infrastructure.cluster.x-k8s.io
   resources:
+  - awsclusterroleidentities
   - awsclusters
   - awsclusters/status
   - clusters
