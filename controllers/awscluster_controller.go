@@ -18,12 +18,12 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
-	capi "sigs.k8s.io/cluster-api/api/v1alpha3"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/cluster-api/util/conditions"
@@ -34,15 +34,9 @@ import (
 
 	"github.com/giantswarm/dns-operator-aws/pkg/cloud/scope"
 	"github.com/giantswarm/dns-operator-aws/pkg/cloud/services/route53"
+	"github.com/giantswarm/dns-operator-aws/pkg/key"
 
 	capa "sigs.k8s.io/cluster-api-provider-aws/api/v1alpha3"
-)
-
-const (
-	CAPIWatchFilterLabel                    = "cluster.x-k8s.io/watch-filter"
-	CAPAReleaseComponent                    = "cluster-api-provider-aws"
-	dnsFinalizerName                        = "dns-operator-aws.finalizers.giantswarm.io"
-	DNSZoneReady         capi.ConditionType = "DNSZoneReady"
 )
 
 // AWSClusterReconciler reconciles a AWSCluster object
@@ -97,19 +91,23 @@ func (r *AWSClusterReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 
 	log.Info(workloadClusterRole)
 
-	awsClusterRoleIdentity := &capa.AWSClusterRoleIdentity{}
-	err = r.Get(ctx, req.NamespacedName, awsClusterRoleIdentity)
+	awsClusterRoleIdentityList := &capa.AWSClusterRoleIdentityList{}
+	err = r.List(ctx, awsClusterRoleIdentityList, client.MatchingLabels{key.ClusterNameLabel: req.Name})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			log.Info("not found")
 			return reconcile.Result{}, nil
 		}
 		return reconcile.Result{}, err
 	}
 
+	if len(awsClusterRoleIdentityList.Items) != 1 {
+		log.Info(fmt.Sprintf("expected 1 AWSCluster but found '%d'", len(awsClusterRoleIdentityList.Items)))
+		return reconcile.Result{}, nil
+	}
+
 	// Create the workload cluster scope.
 	clusterScope, err := scope.NewClusterScope(scope.ClusterScopeParams{
-		ARN:        awsClusterRoleIdentity.Spec.RoleArn,
+		ARN:        awsClusterRoleIdentityList.Items[0].Spec.RoleArn,
 		BaseDomain: r.WorkloadClusterBaseDomain,
 		Logger:     log,
 		AWSCluster: awsCluster,
@@ -149,7 +147,7 @@ func (r *AWSClusterReconciler) reconcileNormal(ctx context.Context, clusterScope
 
 	awsCluster := clusterScope.AWSCluster
 	// If the AWSCluster doesn't have the finalizer, add it.
-	controllerutil.AddFinalizer(awsCluster, dnsFinalizerName)
+	controllerutil.AddFinalizer(awsCluster, key.DNSFinalizerName)
 
 	route53Service := route53.NewService(clusterScope, managementScope)
 	if err := route53Service.ReconcileRoute53(); err != nil {
@@ -157,7 +155,7 @@ func (r *AWSClusterReconciler) reconcileNormal(ctx context.Context, clusterScope
 		return reconcile.Result{}, err
 	}
 
-	conditions.MarkTrue(awsCluster, DNSZoneReady)
+	conditions.MarkTrue(awsCluster, key.DNSZoneReady)
 	err := r.Client.Status().Update(ctx, awsCluster)
 	if err != nil {
 		return reconcile.Result{}, err
@@ -177,7 +175,7 @@ func (r *AWSClusterReconciler) reconcileDelete(ctx context.Context, clusterScope
 	}
 
 	// AWSCluster is deleted so remove the finalizer.
-	controllerutil.RemoveFinalizer(clusterScope.AWSCluster, dnsFinalizerName)
+	controllerutil.RemoveFinalizer(clusterScope.AWSCluster, key.DNSFinalizerName)
 
 	return reconcile.Result{}, nil
 }
