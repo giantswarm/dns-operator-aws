@@ -102,6 +102,9 @@ func (r *AWSClusterReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 	err = r.Get(ctx, awsClusterRoleIdentityReq, awsClusterRoleIdentity)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
+			log.Info("not found or so")
+			log.Info(awsClusterRoleIdentityReq.Name)
+			log.Info(awsClusterRoleIdentityReq.Namespace)
 			return reconcile.Result{}, nil
 		}
 		return reconcile.Result{}, err
