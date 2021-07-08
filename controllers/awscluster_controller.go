@@ -97,6 +97,7 @@ func (r *AWSClusterReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 	}
 
 	awsClusterRoleIdentityReq := types.NamespacedName{Name: workloadClusterRole, Namespace: req.Namespace}
+	log.Info(awsClusterRoleIdentityReq.String())
 	awsClusterRoleIdentity := &capa.AWSClusterRoleIdentity{}
 	err = r.Get(ctx, awsClusterRoleIdentityReq, awsClusterRoleIdentity)
 	if err != nil {
