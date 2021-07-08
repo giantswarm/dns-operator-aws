@@ -23,7 +23,6 @@ import (
 	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	capi "sigs.k8s.io/cluster-api/api/v1alpha3"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/annotations"
@@ -91,20 +90,16 @@ func (r *AWSClusterReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 		return ctrl.Result{}, nil
 	}
 
-	var workloadClusterRole string
-	if awsCluster.Spec.IdentityRef.Kind == "AWSClusterRoleIdentity" {
-		workloadClusterRole = awsCluster.Spec.IdentityRef.Name
-	}
+	//var workloadClusterRole string
+	//if awsCluster.Spec.IdentityRef.Kind == "AWSClusterRoleIdentity" {
+	//	workloadClusterRole = awsCluster.Spec.IdentityRef.Name
+	//}
 
-	awsClusterRoleIdentityReq := types.NamespacedName{Name: workloadClusterRole, Namespace: req.Namespace}
-	log.Info(awsClusterRoleIdentityReq.String())
 	awsClusterRoleIdentity := &capa.AWSClusterRoleIdentity{}
-	err = r.Get(ctx, awsClusterRoleIdentityReq, awsClusterRoleIdentity)
+	err = r.Get(ctx, req.NamespacedName, awsClusterRoleIdentity)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			log.Info("not found or so")
-			log.Info(awsClusterRoleIdentityReq.Name)
-			log.Info(awsClusterRoleIdentityReq.Namespace)
+			log.Info("not found")
 			return reconcile.Result{}, nil
 		}
 		return reconcile.Result{}, err
