@@ -90,10 +90,12 @@ func (r *AWSClusterReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 		return ctrl.Result{}, nil
 	}
 
-	//var workloadClusterRole string
-	//if awsCluster.Spec.IdentityRef.Kind == "AWSClusterRoleIdentity" {
-	//	workloadClusterRole = awsCluster.Spec.IdentityRef.Name
-	//}
+	var workloadClusterRole string
+	if awsCluster.Spec.IdentityRef.Kind == "AWSClusterRoleIdentity" {
+		workloadClusterRole = awsCluster.Spec.IdentityRef.Name
+	}
+
+	log.Info(workloadClusterRole)
 
 	awsClusterRoleIdentity := &capa.AWSClusterRoleIdentity{}
 	err = r.Get(ctx, req.NamespacedName, awsClusterRoleIdentity)
