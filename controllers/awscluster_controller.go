@@ -101,7 +101,7 @@ func (r *AWSClusterReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 	}
 
 	if len(awsClusterRoleIdentityList.Items) != 1 {
-		log.Info(fmt.Sprintf("expected 1 AWSCluster but found '%d'", len(awsClusterRoleIdentityList.Items)))
+		log.Info(fmt.Sprintf("expected 1 AWSClusterRoleIdentity but found '%d'", len(awsClusterRoleIdentityList.Items)))
 		return reconcile.Result{}, nil
 	}
 
