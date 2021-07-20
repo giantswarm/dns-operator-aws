@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
@@ -84,13 +85,7 @@ func (r *AWSClusterReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 		return ctrl.Result{}, nil
 	}
 
-	var workloadClusterRole string
-	if awsCluster.Spec.IdentityRef.Kind == "AWSClusterRoleIdentity" {
-		workloadClusterRole = awsCluster.Spec.IdentityRef.Name
-	}
-
-	log.Info(workloadClusterRole)
-
+	// Fetch AWSClusterRole from the cluster.
 	awsClusterRoleIdentityList := &capa.AWSClusterRoleIdentityList{}
 	err = r.List(ctx, awsClusterRoleIdentityList, client.MatchingLabels{key.ClusterNameLabel: req.Name})
 	if err != nil {
@@ -148,6 +143,10 @@ func (r *AWSClusterReconciler) reconcileNormal(ctx context.Context, clusterScope
 	awsCluster := clusterScope.AWSCluster
 	// If the AWSCluster doesn't have the finalizer, add it.
 	controllerutil.AddFinalizer(awsCluster, key.DNSFinalizerName)
+	// Register the finalizer immediately to avoid orphaning AWS resources on delete
+	if err := r.Update(ctx, awsCluster); err != nil {
+		return reconcile.Result{}, err
+	}
 
 	route53Service := route53.NewService(clusterScope, managementScope)
 	if err := route53Service.ReconcileRoute53(); err != nil {
@@ -161,7 +160,10 @@ func (r *AWSClusterReconciler) reconcileNormal(ctx context.Context, clusterScope
 		return reconcile.Result{}, err
 	}
 
-	return reconcile.Result{}, nil
+	return ctrl.Result{
+		Requeue:      true,
+		RequeueAfter: time.Minute * 5,
+	}, nil
 }
 
 func (r *AWSClusterReconciler) reconcileDelete(ctx context.Context, clusterScope *scope.ClusterScope, managementScope *scope.ManagementClusterScope) (reconcile.Result, error) {
@@ -174,8 +176,16 @@ func (r *AWSClusterReconciler) reconcileDelete(ctx context.Context, clusterScope
 		return reconcile.Result{}, err
 	}
 
+	awsCluster := clusterScope.AWSCluster
 	// AWSCluster is deleted so remove the finalizer.
-	controllerutil.RemoveFinalizer(clusterScope.AWSCluster, key.DNSFinalizerName)
+	controllerutil.RemoveFinalizer(awsCluster, key.DNSFinalizerName)
+	// Finally remove the finalizer
+	if err := r.Update(ctx, awsCluster); err != nil {
+		return reconcile.Result{}, err
+	}
 
-	return reconcile.Result{}, nil
+	return ctrl.Result{
+		Requeue:      true,
+		RequeueAfter: time.Minute * 5,
+	}, nil
 }
