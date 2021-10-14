@@ -1,13 +1,17 @@
+aws:
+  accessKeyID: accesskey
+  secretAccessKey: secretkey
+  region: region
+
 project:
   branch: "[[ .Branch ]]"
   commit: "[[ .SHA ]]"
 image:
   name: "giantswarm/dns-operator-aws"
   tag: "[[ .Version ]]"
-Installation:
-  V1:
-    Registry:
-      Domain: docker.io
+registry:
+  domain: docker.io
+
 pod:
   user:
     id: 1000
