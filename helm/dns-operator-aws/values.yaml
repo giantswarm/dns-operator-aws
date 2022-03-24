@@ -17,3 +17,6 @@ pod:
     id: 1000
   group:
     id: 1000
+
+verticalPodAutoscaler:
+  enabled: true
