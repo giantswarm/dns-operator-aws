@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.2] - 2022-08-04
+
 ## [0.2.1] - 2022-03-24
 
 - Add VerticalPodAutoscaler CR.
@@ -26,7 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2021-10-14
 
 
-[Unreleased]: https://github.com/giantswarm/dns-operator-aws/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/giantswarm/dns-operator-aws/compare/v0.2.2...HEAD
+[0.2.2]: https://github.com/giantswarm/dns-operator-aws/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/giantswarm/dns-operator-aws/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/giantswarm/dns-operator-aws/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/giantswarm/dns-operator-aws/compare/v0.1.0...v0.1.1
