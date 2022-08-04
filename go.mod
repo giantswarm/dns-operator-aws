@@ -3,7 +3,7 @@ module github.com/giantswarm/dns-operator-aws
 go 1.13
 
 require (
-	github.com/aws/aws-sdk-go v1.40.32
+	github.com/aws/aws-sdk-go v1.43.28
 	github.com/go-logr/logr v0.1.0
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.11.0
@@ -22,4 +22,8 @@ replace (
 	github.com/dgrijalva/jwt-go => github.com/dgrijalva/jwt-go/v4 v4.0.0-preview1
 	github.com/gogo/protobuf v1.3.1 => github.com/gogo/protobuf v1.3.2
 	github.com/gorilla/websocket v1.4.0 => github.com/gorilla/websocket v1.4.2
+	github.com/miekg/dns v1.0.14 => github.com/miekg/dns v1.1.50
+	github.com/pkg/sftp v1.10.1 => github.com/pkg/sftp v1.13.5
+	github.com/prometheus/client_golang v1.11.0 => github.com/prometheus/client_golang v1.12.2
+	go.mongodb.org/mongo-driver v1.1.2 => go.mongodb.org/mongo-driver v1.10.1
 )
