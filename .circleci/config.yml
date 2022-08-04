@@ -95,7 +95,7 @@ workflows:
           # Trigger the job also on git tag.
           tags:
             only: /^v.*/
-      - architect/push-to-app-collection:
+    - architect/push-to-app-collection:
           name: capa-app-collection
           context: "architect"
           app_name: "dns-operator-aws"
