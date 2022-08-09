@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fix fetching `AWSClusterRoleIdentity`.
+- Remove `k8s` from the domain name.
 
 ## [0.2.2] - 2022-08-04
 
