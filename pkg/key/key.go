@@ -1,6 +1,8 @@
 package key
 
 import (
+	"fmt"
+
 	capi "sigs.k8s.io/cluster-api/api/v1alpha3"
 )
 
@@ -11,3 +13,7 @@ const (
 	DNSFinalizerName                        = "dns-operator-aws.finalizers.giantswarm.io"
 	DNSZoneReady         capi.ConditionType = "DNSZoneReady"
 )
+
+func ClusterDomain(name string, base string) string {
+	return fmt.Sprintf("%s.%s", name, base)
+}
