@@ -18,7 +18,6 @@ package controllers
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -86,8 +85,8 @@ func (r *AWSClusterReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 	}
 
 	// Fetch AWSClusterRole from the cluster.
-	awsClusterRoleIdentityList := &capa.AWSClusterRoleIdentityList{}
-	err = r.List(ctx, awsClusterRoleIdentityList, client.MatchingLabels{key.ClusterNameLabel: req.Name})
+	awsClusterRoleIdentity := &capa.AWSClusterRoleIdentity{}
+	err = r.Get(ctx, client.ObjectKey{Name: awsCluster.Spec.IdentityRef.Name}, awsClusterRoleIdentity)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			return reconcile.Result{}, nil
@@ -95,14 +94,9 @@ func (r *AWSClusterReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 		return reconcile.Result{}, err
 	}
 
-	if len(awsClusterRoleIdentityList.Items) != 1 {
-		log.Info(fmt.Sprintf("expected 1 AWSClusterRoleIdentity but found '%d'", len(awsClusterRoleIdentityList.Items)))
-		return reconcile.Result{}, nil
-	}
-
 	// Create the workload cluster scope.
 	clusterScope, err := scope.NewClusterScope(scope.ClusterScopeParams{
-		ARN:        awsClusterRoleIdentityList.Items[0].Spec.RoleArn,
+		ARN:        awsClusterRoleIdentity.Spec.RoleArn,
 		BaseDomain: r.WorkloadClusterBaseDomain,
 		Logger:     log,
 		AWSCluster: awsCluster,

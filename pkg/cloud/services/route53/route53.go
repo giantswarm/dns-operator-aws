@@ -73,7 +73,7 @@ func (s *Service) ReconcileRoute53() error {
 func (s *Service) describeWorkloadClusterZone() (string, error) {
 	// Search host zone by DNSName
 	input := &route53.ListHostedZonesByNameInput{
-		DNSName: aws.String(fmt.Sprintf("%s.k8s.%s", s.scope.Name(), s.scope.BaseDomain())),
+		DNSName: aws.String(fmt.Sprintf("%s.%s", s.scope.Name(), s.scope.BaseDomain())),
 	}
 	out, err := s.Route53Client.ListHostedZonesByName(input)
 	if err != nil {
@@ -83,7 +83,7 @@ func (s *Service) describeWorkloadClusterZone() (string, error) {
 		return "", &Route53Error{Code: http.StatusNotFound, msg: route53.ErrCodeHostedZoneNotFound}
 	}
 
-	if *out.HostedZones[0].Name != fmt.Sprintf("%s.k8s.%s.", s.scope.Name(), s.scope.BaseDomain()) {
+	if *out.HostedZones[0].Name != fmt.Sprintf("%s.%s.", s.scope.Name(), s.scope.BaseDomain()) {
 		return "", &Route53Error{Code: http.StatusNotFound, msg: route53.ErrCodeHostedZoneNotFound}
 	}
 
@@ -128,12 +128,12 @@ func (s *Service) changeWorkloadClusterRecords(action string) error {
 				{
 					Action: aws.String(action),
 					ResourceRecordSet: &route53.ResourceRecordSet{
-						Name: aws.String(fmt.Sprintf("*.%s.k8s.%s", s.scope.Name(), s.scope.BaseDomain())),
+						Name: aws.String(fmt.Sprintf("*.%s.%s", s.scope.Name(), s.scope.BaseDomain())),
 						Type: aws.String("CNAME"),
 						TTL:  aws.Int64(300),
 						ResourceRecords: []*route53.ResourceRecord{
 							{
-								Value: aws.String(fmt.Sprintf("ingress.%s.k8s.%s", s.scope.Name(), s.scope.BaseDomain())),
+								Value: aws.String(fmt.Sprintf("ingress.%s.%s", s.scope.Name(), s.scope.BaseDomain())),
 							},
 						},
 					},
@@ -141,7 +141,7 @@ func (s *Service) changeWorkloadClusterRecords(action string) error {
 				{
 					Action: aws.String(action),
 					ResourceRecordSet: &route53.ResourceRecordSet{
-						Name: aws.String(fmt.Sprintf("api.%s.k8s.%s", s.scope.Name(), s.scope.BaseDomain())),
+						Name: aws.String(fmt.Sprintf("api.%s.%s", s.scope.Name(), s.scope.BaseDomain())),
 						Type: aws.String("A"),
 						AliasTarget: &route53.AliasTarget{
 							DNSName:              aws.String(s.scope.APIEndpoint()),
@@ -199,7 +199,7 @@ func (s *Service) changeManagementClusterDelegation(action string) error {
 				{
 					Action: aws.String(action),
 					ResourceRecordSet: &route53.ResourceRecordSet{
-						Name:            aws.String(fmt.Sprintf("%s.k8s.%s", s.scope.Name(), s.managementScope.BaseDomain())),
+						Name:            aws.String(fmt.Sprintf("%s.%s", s.scope.Name(), s.managementScope.BaseDomain())),
 						Type:            aws.String("NS"),
 						TTL:             aws.Int64(300),
 						ResourceRecords: records,
@@ -220,7 +220,7 @@ func (s *Service) createWorkloadClusterZone() error {
 	now := time.Now()
 	input := &route53.CreateHostedZoneInput{
 		CallerReference: aws.String(now.UTC().String()),
-		Name:            aws.String(fmt.Sprintf("%s.k8s.%s.", s.scope.Name(), s.scope.BaseDomain())),
+		Name:            aws.String(fmt.Sprintf("%s.%s.", s.scope.Name(), s.scope.BaseDomain())),
 	}
 	_, err := s.Route53Client.CreateHostedZone(input)
 	if err != nil {
