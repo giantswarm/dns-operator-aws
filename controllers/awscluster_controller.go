@@ -101,7 +101,7 @@ func (r *AWSClusterReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 	{
 		bastionMachineList := &capi.MachineList{}
 		err = r.List(ctx, bastionMachineList, client.MatchingLabels{
-			"cluster.x-k8s.io/cluster-name": cluster.ClusterName,
+			"cluster.x-k8s.io/cluster-name": cluster.Name,
 			"cluster.x-k8s.io/role":         "bastion",
 		},
 		)
@@ -119,7 +119,7 @@ func (r *AWSClusterReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 				}
 			}
 		} else {
-			fmt.Printf("didnt foun bastion machine with labels 'cluster.x-k8s.io/cluster-name=%s' and 'cluster.x-k8s.io/role=bastion'\n", cluster.ClusterName)
+			fmt.Printf("didnt foun bastion machine with labels 'cluster.x-k8s.io/cluster-name=%s' and 'cluster.x-k8s.io/role=bastion'\n", cluster.Name)
 
 		}
 	}
