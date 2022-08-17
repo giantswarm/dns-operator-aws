@@ -100,7 +100,11 @@ func (r *AWSClusterReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 	var bastionIP string
 	{
 		bastionMachineList := &capi.MachineList{}
-		err = r.List(ctx, bastionMachineList, client.HasLabels{fmt.Sprintf("cluster.x-k8s.io/cluster-name=%s", cluster.ClusterName), "cluster.x-k8s.io/role=bastion"})
+		err = r.List(ctx, bastionMachineList, client.MatchingLabels{
+			"cluster.x-k8s.io/cluster-name": cluster.ClusterName,
+			"cluster.x-k8s.io/role":         "bastion",
+		},
+		)
 
 		if err != nil {
 			return reconcile.Result{}, err
