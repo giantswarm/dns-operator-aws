@@ -149,7 +149,6 @@ func (s *Service) changeWorkloadClusterRecords(action string) error {
 		},
 	}
 	if s.scope.BastionIP() != "" {
-		fmt.Printf("chanign record for bastion with Ip %s\n", s.scope.BastionIP())
 		changes = append(changes, &route53.Change{
 			Action: aws.String(action),
 			ResourceRecordSet: &route53.ResourceRecordSet{
@@ -163,9 +162,6 @@ func (s *Service) changeWorkloadClusterRecords(action string) error {
 				},
 			},
 		})
-	} else {
-		fmt.Printf("bastion IP si empty, not creating dns record\n")
-
 	}
 
 	input := &route53.ChangeResourceRecordSetsInput{
