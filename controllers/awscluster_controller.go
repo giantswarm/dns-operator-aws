@@ -100,17 +100,23 @@ func (r *AWSClusterReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 	var bastionIP string
 	{
 		bastionMachineList := &capi.MachineList{}
-		err = r.List(ctx, bastionMachineList, client.HasLabels{fmt.Sprintf("cluster.x-k8s.io/cluster-name=%s", req.Name), "cluster.x-k8s.io/role=bastion"})
+		err = r.List(ctx, bastionMachineList, client.HasLabels{fmt.Sprintf("cluster.x-k8s.io/cluster-name=%s", cluster.ClusterName), "cluster.x-k8s.io/role=bastion"})
 
 		if err != nil {
 			return reconcile.Result{}, err
 		}
 		if len(bastionMachineList.Items) > 0 {
+			fmt.Printf("found bastion machine %s\n", bastionMachineList.Items[0].Name)
+
 			for _, addr := range bastionMachineList.Items[0].Status.Addresses {
 				if addr.Type == "ExternalIP" {
 					bastionIP = addr.Address
+					fmt.Printf("found bastion IP %s\n", bastionIP)
 				}
 			}
+		} else {
+			fmt.Printf("didnt foun bastion machine with labels 'cluster.x-k8s.io/cluster-name=%s' and 'cluster.x-k8s.io/role=bastion'\n", cluster.ClusterName)
+
 		}
 	}
 
