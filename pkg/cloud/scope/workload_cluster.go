@@ -15,6 +15,7 @@ type ClusterScopeParams struct {
 	ARN        string
 	AWSCluster *infrav1.AWSCluster
 	BaseDomain string
+	BastionIP  string
 	Logger     logr.Logger
 	Session    awsclient.ConfigProvider
 }
@@ -44,6 +45,7 @@ func NewClusterScope(params ClusterScopeParams) (*ClusterScope, error) {
 		assumeRole: params.ARN,
 		AWSCluster: params.AWSCluster,
 		baseDomain: params.BaseDomain,
+		bastionIP:  params.BastionIP,
 		Logger:     params.Logger,
 		session:    session,
 	}, nil
@@ -54,6 +56,7 @@ type ClusterScope struct {
 	assumeRole string
 	AWSCluster *infrav1.AWSCluster
 	baseDomain string
+	bastionIP  string
 	logr.Logger
 	session awsclient.ConfigProvider
 }
@@ -71,6 +74,10 @@ func (s *ClusterScope) APIEndpoint() string {
 // BaseDomain returns the workload cluster basedomain.
 func (s *ClusterScope) BaseDomain() string {
 	return s.baseDomain
+}
+
+func (s *ClusterScope) BastionIP() string {
+	return s.bastionIP
 }
 
 // InfraCluster returns the AWS infrastructure cluster or control plane object.

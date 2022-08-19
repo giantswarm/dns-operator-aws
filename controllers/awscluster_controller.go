@@ -24,6 +24,7 @@ import (
 	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	capi "sigs.k8s.io/cluster-api/api/v1alpha3"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/cluster-api/util/conditions"
@@ -93,11 +94,34 @@ func (r *AWSClusterReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 		}
 		return reconcile.Result{}, err
 	}
+	// Fetch bastion IP
+	// bastion might not exist depending on cluster configuration so there can be empty string here
+	var bastionIP string
+	{
+		bastionMachineList := &capi.MachineList{}
+		err = r.List(ctx, bastionMachineList, client.MatchingLabels{
+			"cluster.x-k8s.io/cluster-name": cluster.Name,
+			"cluster.x-k8s.io/role":         "bastion",
+		},
+		)
+
+		if err != nil {
+			return reconcile.Result{}, err
+		}
+		if len(bastionMachineList.Items) > 0 {
+			for _, addr := range bastionMachineList.Items[0].Status.Addresses {
+				if addr.Type == "ExternalIP" {
+					bastionIP = addr.Address
+				}
+			}
+		}
+	}
 
 	// Create the workload cluster scope.
 	clusterScope, err := scope.NewClusterScope(scope.ClusterScopeParams{
 		ARN:        awsClusterRoleIdentity.Spec.RoleArn,
 		BaseDomain: r.WorkloadClusterBaseDomain,
+		BastionIP:  bastionIP,
 		Logger:     log,
 		AWSCluster: awsCluster,
 	})

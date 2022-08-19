@@ -129,37 +129,52 @@ func (s *Service) changeWorkloadClusterRecords(action string) error {
 		return err
 	}
 
-	input := &route53.ChangeResourceRecordSetsInput{
-		HostedZoneId: aws.String(hostZoneID),
-		ChangeBatch: &route53.ChangeBatch{
-			Changes: []*route53.Change{
-				{
-					Action: aws.String(action),
-					ResourceRecordSet: &route53.ResourceRecordSet{
-						Name: aws.String(fmt.Sprintf("*.%s.%s", s.scope.Name(), s.scope.BaseDomain())),
-						Type: aws.String("CNAME"),
-						TTL:  aws.Int64(300),
-						ResourceRecords: []*route53.ResourceRecord{
-							{
-								Value: aws.String(fmt.Sprintf("ingress.%s.%s", s.scope.Name(), s.scope.BaseDomain())),
-							},
-						},
-					},
-				},
-				{
-					Action: aws.String(action),
-					ResourceRecordSet: &route53.ResourceRecordSet{
-						Name: aws.String(fmt.Sprintf("api.%s.%s", s.scope.Name(), s.scope.BaseDomain())),
-						Type: aws.String("A"),
-						AliasTarget: &route53.AliasTarget{
-							DNSName:              aws.String(s.scope.APIEndpoint()),
-							EvaluateTargetHealth: aws.Bool(false),
-							HostedZoneId:         aws.String(canonicalHostedZones[s.scope.Region()]),
-						},
+	changes := []*route53.Change{
+		{
+			Action: aws.String(action),
+			ResourceRecordSet: &route53.ResourceRecordSet{
+				Name: aws.String(fmt.Sprintf("*.%s.%s", s.scope.Name(), s.scope.BaseDomain())),
+				Type: aws.String("CNAME"),
+				TTL:  aws.Int64(300),
+				ResourceRecords: []*route53.ResourceRecord{
+					{
+						Value: aws.String(fmt.Sprintf("ingress.%s.%s", s.scope.Name(), s.scope.BaseDomain())),
 					},
 				},
 			},
 		},
+		{
+			Action: aws.String(action),
+			ResourceRecordSet: &route53.ResourceRecordSet{
+				Name: aws.String(fmt.Sprintf("api.%s.%s", s.scope.Name(), s.scope.BaseDomain())),
+				Type: aws.String("A"),
+				AliasTarget: &route53.AliasTarget{
+					DNSName:              aws.String(s.scope.APIEndpoint()),
+					EvaluateTargetHealth: aws.Bool(false),
+					HostedZoneId:         aws.String(canonicalHostedZones[s.scope.Region()]),
+				},
+			},
+		},
+	}
+	if s.scope.BastionIP() != "" {
+		changes = append(changes, &route53.Change{
+			Action: aws.String(action),
+			ResourceRecordSet: &route53.ResourceRecordSet{
+				Name: aws.String(fmt.Sprintf("bastion1.%s.%s", s.scope.Name(), s.scope.BaseDomain())),
+				Type: aws.String("A"),
+				TTL:  aws.Int64(300),
+				ResourceRecords: []*route53.ResourceRecord{
+					{
+						Value: aws.String(s.scope.BastionIP()),
+					},
+				},
+			},
+		})
+	}
+
+	input := &route53.ChangeResourceRecordSetsInput{
+		HostedZoneId: aws.String(hostZoneID),
+		ChangeBatch:  &route53.ChangeBatch{Changes: changes},
 	}
 
 	_, err = s.Route53Client.ChangeResourceRecordSets(input)

@@ -28,6 +28,8 @@ type ClusterScoper interface {
 	APIEndpoint() string
 	// BaseDomain returns workload cluster domain. This could be the same domain like management cluster or something a different one.
 	BaseDomain() string
+	// BastionIP returns IP for workload cluster bastion machine
+	BastionIP() string
 	// InfraCluster returns the AWS infrastructure cluster object.
 	InfraCluster() ClusterObject
 	// Name returns the CAPI cluster name.
