@@ -20,18 +20,26 @@ func (s *Service) DeleteRoute53() error {
 	}
 
 	// First delete delegation record from managament
-	if err := s.changeManagementClusterDelegation("DELETE"); err != nil {
+	err = s.changeManagementClusterDelegation("DELETE")
+	if IsNotFound(err) {
+		return nil
+	} else if err != nil {
 		return err
 	}
 
 	// We need to delete all records first before we can delete the hosted zone
-	if err := s.changeWorkloadClusterRecords("DELETE"); err != nil {
+	err = s.changeWorkloadClusterRecords("DELETE")
+	if IsNotFound(err) {
+		return nil
+	} else if err != nil {
 		return err
 	}
 
 	// Finally delete DNS zone for workload cluster
 	err = s.deleteWorkloadClusterZone(hostedZoneID)
-	if err != nil {
+	if IsNotFound(err) {
+		return nil
+	} else if err != nil {
 		return err
 	}
 	s.scope.V(2).Info(fmt.Sprintf("Deleting hosted zone completed successfully for cluster %s", s.scope.Name()))
