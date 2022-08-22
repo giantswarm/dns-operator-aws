@@ -2,6 +2,7 @@ package route53
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -55,6 +56,10 @@ func IsNotFound(err error) bool {
 		}
 	}
 	return false
+}
+
+func IsAlreadyExists(err error) bool {
+	return err != nil && strings.Contains(err.Error(), "it already exists")
 }
 
 // IsAccessDenied returns true if the error is AccessDenied.

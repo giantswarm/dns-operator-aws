@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Ignore `Not Found` errors during deletion to avoid panic.
+
 ## [0.3.0] - 2022-08-22
 
 ## [0.2.3] - 2022-08-09

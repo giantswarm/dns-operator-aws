@@ -20,18 +20,26 @@ func (s *Service) DeleteRoute53() error {
 	}
 
 	// First delete delegation record from managament
-	if err := s.changeManagementClusterDelegation("DELETE"); err != nil {
+	err = s.changeManagementClusterDelegation("DELETE")
+	if IsNotFound(err) {
+		return nil
+	} else if err != nil {
 		return err
 	}
 
 	// We need to delete all records first before we can delete the hosted zone
-	if err := s.changeWorkloadClusterRecords("DELETE"); err != nil {
+	err = s.changeWorkloadClusterRecords("DELETE")
+	if IsNotFound(err) {
+		return nil
+	} else if err != nil {
 		return err
 	}
 
 	// Finally delete DNS zone for workload cluster
 	err = s.deleteWorkloadClusterZone(hostedZoneID)
-	if err != nil {
+	if IsNotFound(err) {
+		return nil
+	} else if err != nil {
 		return err
 	}
 	s.scope.V(2).Info(fmt.Sprintf("Deleting hosted zone completed successfully for cluster %s", s.scope.Name()))
@@ -148,21 +156,6 @@ func (s *Service) changeWorkloadClusterRecords(action string) error {
 			},
 		},
 	}
-	if s.scope.BastionIP() != "" {
-		changes = append(changes, &route53.Change{
-			Action: aws.String(action),
-			ResourceRecordSet: &route53.ResourceRecordSet{
-				Name: aws.String(fmt.Sprintf("bastion1.%s.%s", s.scope.Name(), s.scope.BaseDomain())),
-				Type: aws.String("A"),
-				TTL:  aws.Int64(300),
-				ResourceRecords: []*route53.ResourceRecord{
-					{
-						Value: aws.String(s.scope.BastionIP()),
-					},
-				},
-			},
-		})
-	}
 
 	input := &route53.ChangeResourceRecordSetsInput{
 		HostedZoneId: aws.String(hostZoneID),
@@ -170,9 +163,52 @@ func (s *Service) changeWorkloadClusterRecords(action string) error {
 	}
 
 	_, err = s.Route53Client.ChangeResourceRecordSets(input)
-	if err != nil {
+	if IsAlreadyExists(err) {
+		// if record already exists, continue with bastion
+	} else if err != nil {
+		s.scope.Info("failed to change base DNS records", "error", err.Error())
 		return err
 	}
+
+	// bastion is optional and the operation is transactions so all must succeed
+	if s.scope.BastionIP() != "" {
+		changes := []*route53.Change{
+			{
+				Action: aws.String(action),
+				ResourceRecordSet: &route53.ResourceRecordSet{
+					Name: aws.String(fmt.Sprintf("bastion1.%s.%s", s.scope.Name(), s.scope.BaseDomain())),
+					Type: aws.String("A"),
+					TTL:  aws.Int64(300),
+					ResourceRecords: []*route53.ResourceRecord{
+						{
+							Value: aws.String(s.scope.BastionIP()),
+						},
+					},
+				},
+			},
+		}
+
+		input := &route53.ChangeResourceRecordSetsInput{
+			HostedZoneId: aws.String(hostZoneID),
+			ChangeBatch:  &route53.ChangeBatch{Changes: changes},
+		}
+
+		_, err := s.Route53Client.ChangeResourceRecordSets(input)
+		if IsAlreadyExists(err) {
+			// update record
+			input.ChangeBatch.Changes[0].Action = aws.String("UPSERT")
+			_, err := s.Route53Client.ChangeResourceRecordSets(input)
+			if err != nil {
+				s.scope.Info("failed to update bastion DNS records", "error", err.Error())
+				return err
+			}
+
+		} else if err != nil {
+			s.scope.Info("failed to change bastion DNS records", "error", err.Error())
+			return err
+		}
+	}
+
 	return nil
 }
 

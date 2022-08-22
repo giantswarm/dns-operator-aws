@@ -112,6 +112,7 @@ func (r *AWSClusterReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 			for _, addr := range bastionMachineList.Items[0].Status.Addresses {
 				if addr.Type == "ExternalIP" {
 					bastionIP = addr.Address
+					break
 				}
 			}
 		}
@@ -163,6 +164,7 @@ func (r *AWSClusterReconciler) reconcileNormal(ctx context.Context, clusterScope
 	controllerutil.AddFinalizer(awsCluster, key.DNSFinalizerName)
 	// Register the finalizer immediately to avoid orphaning AWS resources on delete
 	if err := r.Update(ctx, awsCluster); err != nil {
+		clusterScope.Error(err, "failed to add finalizer")
 		return reconcile.Result{}, err
 	}
 
@@ -194,16 +196,29 @@ func (r *AWSClusterReconciler) reconcileDelete(ctx context.Context, clusterScope
 		return reconcile.Result{}, err
 	}
 
-	awsCluster := clusterScope.AWSCluster
+	clusterScope.Info("removing finalizer")
+	awsCluster := &capa.AWSCluster{}
+	err := r.Get(ctx, client.ObjectKey{Name: clusterScope.AWSCluster.Name, Namespace: clusterScope.AWSCluster.Namespace}, awsCluster)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return reconcile.Result{}, nil
+		}
+
+		return reconcile.Result{}, err
+	}
 	// AWSCluster is deleted so remove the finalizer.
 	controllerutil.RemoveFinalizer(awsCluster, key.DNSFinalizerName)
 	// Finally remove the finalizer
 	if err := r.Update(ctx, awsCluster); err != nil {
-		return reconcile.Result{}, err
+		clusterScope.Info("failed to remove finalizer", "reason", err.Error())
+		return reconcile.Result{
+			Requeue:      true,
+			RequeueAfter: time.Minute,
+		}, nil
 	}
+	clusterScope.Info("removed finalizer, removing from queue")
 
 	return ctrl.Result{
-		Requeue:      true,
-		RequeueAfter: time.Minute * 5,
+		Requeue: false,
 	}, nil
 }
