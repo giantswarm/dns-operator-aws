@@ -112,7 +112,6 @@ func (r *AWSClusterReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 			for _, addr := range bastionMachineList.Items[0].Status.Addresses {
 				if addr.Type == "ExternalIP" {
 					bastionIP = addr.Address
-					log.Info("Found bastion", "externalIP", bastionIP)
 					break
 				}
 			}
@@ -197,6 +196,7 @@ func (r *AWSClusterReconciler) reconcileDelete(ctx context.Context, clusterScope
 		return reconcile.Result{}, err
 	}
 
+	clusterScope.Info("removing finalizer")
 	awsCluster := &capa.AWSCluster{}
 	err := r.Get(ctx, client.ObjectKey{Name: clusterScope.AWSCluster.Name, Namespace: clusterScope.AWSCluster.Namespace}, awsCluster)
 	if err != nil {
@@ -212,6 +212,7 @@ func (r *AWSClusterReconciler) reconcileDelete(ctx context.Context, clusterScope
 	if err := r.Update(ctx, awsCluster); err != nil {
 		return reconcile.Result{}, err
 	}
+	clusterScope.Info("removed finalizer")
 
 	return ctrl.Result{
 		Requeue:      true,
