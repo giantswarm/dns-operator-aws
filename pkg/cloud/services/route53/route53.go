@@ -165,29 +165,29 @@ func (s *Service) changeWorkloadClusterRecords(action string) error {
 	_, err = s.Route53Client.ChangeResourceRecordSets(input)
 	if IsAlreadyExists(err) {
 		// if record already exists, continue with bastion
-		s.scope.Error(err, "failed to create DNS record, continue with bastion")
-
 	} else if err != nil {
-		s.scope.Error(err, "failed to change records")
+		s.scope.Info("failed to create base DNS records", "error", err.Error())
 		return err
 	}
 
 	// bastion is optional and the operation is transactions so all must succeed
 	if s.scope.BastionIP() != "" {
 		s.scope.Info("trying to add adding bastion record")
-		changes := append(changes, &route53.Change{
-			Action: aws.String(action),
-			ResourceRecordSet: &route53.ResourceRecordSet{
-				Name: aws.String(fmt.Sprintf("bastion1.%s.%s", s.scope.Name(), s.scope.BaseDomain())),
-				Type: aws.String("A"),
-				TTL:  aws.Int64(300),
-				ResourceRecords: []*route53.ResourceRecord{
-					{
-						Value: aws.String(s.scope.BastionIP()),
+		changes := []*route53.Change{
+			{
+				Action: aws.String(action),
+				ResourceRecordSet: &route53.ResourceRecordSet{
+					Name: aws.String(fmt.Sprintf("bastion1.%s.%s", s.scope.Name(), s.scope.BaseDomain())),
+					Type: aws.String("A"),
+					TTL:  aws.Int64(300),
+					ResourceRecords: []*route53.ResourceRecord{
+						{
+							Value: aws.String(s.scope.BastionIP()),
+						},
 					},
 				},
 			},
-		})
+		}
 
 		input := &route53.ChangeResourceRecordSetsInput{
 			HostedZoneId: aws.String(hostZoneID),
@@ -197,18 +197,16 @@ func (s *Service) changeWorkloadClusterRecords(action string) error {
 		_, err := s.Route53Client.ChangeResourceRecordSets(input)
 		if IsAlreadyExists(err) {
 			// update record
-			s.scope.Info("updating bastion record")
 
 			input.ChangeBatch.Changes[0].Action = aws.String("UPSERT")
 			_, err := s.Route53Client.ChangeResourceRecordSets(input)
 			if err != nil {
-				s.scope.Error(err, "failed to add bastion record")
+				s.scope.Info("failed to create bastion DNS records", "error", err.Error())
 				return err
 			}
-			s.scope.Info("updated bastion record")
 
 		} else if err != nil {
-			s.scope.Error(err, "failed to add bastion record")
+			s.scope.Info("failed to change bastion DNS records", "error", err.Error())
 			return err
 		}
 	}
