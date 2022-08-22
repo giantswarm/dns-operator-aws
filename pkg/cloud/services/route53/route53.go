@@ -163,7 +163,9 @@ func (s *Service) changeWorkloadClusterRecords(action string) error {
 	}
 
 	_, err = s.Route53Client.ChangeResourceRecordSets(input)
-	if err != nil {
+	if IsAlreadyExists(err) {
+		// if record already exists, continue with bastion
+	} else if err != nil {
 		s.scope.Error(err, "failed to change records")
 		return err
 	}
@@ -188,15 +190,19 @@ func (s *Service) changeWorkloadClusterRecords(action string) error {
 			HostedZoneId: aws.String(hostZoneID),
 			ChangeBatch:  &route53.ChangeBatch{Changes: changes},
 		}
-		s.scope.Info("creating bastion record")
 
-		r, err := s.Route53Client.ChangeResourceRecordSets(input)
-		if err != nil {
+		_, err := s.Route53Client.ChangeResourceRecordSets(input)
+		if IsAlreadyExists(err) {
+			// update record
+			input.ChangeBatch.Changes[0].Action = aws.String("UPSERT")
+			_, err := s.Route53Client.ChangeResourceRecordSets(input)
+			if err != nil {
+				return err
+			}
+		} else if err != nil {
 			return err
 		}
-		s.scope.Info("resul creating bastion record", "result", r.ChangeInfo.String())
 	}
-
 	return nil
 }
 
