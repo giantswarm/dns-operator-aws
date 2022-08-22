@@ -167,7 +167,7 @@ func (s *Service) changeWorkloadClusterRecords(action string) error {
 		return err
 	}
 
-	// bastion is optional and the operation is trasactions so all must succeed
+	// bastion is optional and the operation is transactions so all must succeed
 	if s.scope.BastionIP() != "" {
 		changes := append(changes, &route53.Change{
 			Action: aws.String(action),
@@ -187,11 +187,13 @@ func (s *Service) changeWorkloadClusterRecords(action string) error {
 			HostedZoneId: aws.String(hostZoneID),
 			ChangeBatch:  &route53.ChangeBatch{Changes: changes},
 		}
+		s.scope.Info("creating bastion record")
 
-		_, err = s.Route53Client.ChangeResourceRecordSets(input)
+		r, err := s.Route53Client.ChangeResourceRecordSets(input)
 		if err != nil {
 			return err
 		}
+		s.scope.Info("resul creating bastion record", "result", r.ChangeInfo.String())
 	}
 
 	return nil
