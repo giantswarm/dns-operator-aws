@@ -112,6 +112,8 @@ func (r *AWSClusterReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 			for _, addr := range bastionMachineList.Items[0].Status.Addresses {
 				if addr.Type == "ExternalIP" {
 					bastionIP = addr.Address
+					log.Info("Found bastion", "externalIP", bastionIP)
+					break
 				}
 			}
 		}
@@ -163,6 +165,7 @@ func (r *AWSClusterReconciler) reconcileNormal(ctx context.Context, clusterScope
 	controllerutil.AddFinalizer(awsCluster, key.DNSFinalizerName)
 	// Register the finalizer immediately to avoid orphaning AWS resources on delete
 	if err := r.Update(ctx, awsCluster); err != nil {
+		clusterScope.Error(err, "failed to add finalizer")
 		return reconcile.Result{}, err
 	}
 
