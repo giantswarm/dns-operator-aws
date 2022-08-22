@@ -170,6 +170,7 @@ func (s *Service) changeWorkloadClusterRecords(action string) error {
 				},
 			},
 		})
+		s.scope.Info(s.scope.BastionIP())
 	}
 
 	input := &route53.ChangeResourceRecordSetsInput{
