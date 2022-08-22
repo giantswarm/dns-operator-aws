@@ -194,7 +194,14 @@ func (r *AWSClusterReconciler) reconcileDelete(ctx context.Context, clusterScope
 		return reconcile.Result{}, err
 	}
 
-	awsCluster := clusterScope.AWSCluster
+	awsCluster := &capa.AWSCluster{}
+	err := r.Get(ctx, client.ObjectKey{Name: clusterScope.AWSCluster.Name, Namespace: clusterScope.AWSCluster.Namespace}, awsCluster)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return reconcile.Result{}, nil
+		}
+		return reconcile.Result{}, err
+	}
 	// AWSCluster is deleted so remove the finalizer.
 	controllerutil.RemoveFinalizer(awsCluster, key.DNSFinalizerName)
 	// Finally remove the finalizer
