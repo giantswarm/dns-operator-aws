@@ -156,8 +156,20 @@ func (s *Service) changeWorkloadClusterRecords(action string) error {
 			},
 		},
 	}
+
+	input := &route53.ChangeResourceRecordSetsInput{
+		HostedZoneId: aws.String(hostZoneID),
+		ChangeBatch:  &route53.ChangeBatch{Changes: changes},
+	}
+
+	_, err = s.Route53Client.ChangeResourceRecordSets(input)
+	if err != nil {
+		return err
+	}
+
+	// bastion is optional and the operation is trasactions so all must succeed
 	if s.scope.BastionIP() != "" {
-		changes = append(changes, &route53.Change{
+		changes := append(changes, &route53.Change{
 			Action: aws.String(action),
 			ResourceRecordSet: &route53.ResourceRecordSet{
 				Name: aws.String(fmt.Sprintf("bastion1.%s.%s", s.scope.Name(), s.scope.BaseDomain())),
@@ -170,18 +182,18 @@ func (s *Service) changeWorkloadClusterRecords(action string) error {
 				},
 			},
 		})
-		s.scope.Info(s.scope.BastionIP())
+
+		input := &route53.ChangeResourceRecordSetsInput{
+			HostedZoneId: aws.String(hostZoneID),
+			ChangeBatch:  &route53.ChangeBatch{Changes: changes},
+		}
+
+		_, err = s.Route53Client.ChangeResourceRecordSets(input)
+		if err != nil {
+			return err
+		}
 	}
 
-	input := &route53.ChangeResourceRecordSetsInput{
-		HostedZoneId: aws.String(hostZoneID),
-		ChangeBatch:  &route53.ChangeBatch{Changes: changes},
-	}
-
-	_, err = s.Route53Client.ChangeResourceRecordSets(input)
-	if err != nil {
-		return err
-	}
 	return nil
 }
 
