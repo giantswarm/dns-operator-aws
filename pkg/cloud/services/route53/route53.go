@@ -162,9 +162,9 @@ func (s *Service) changeWorkloadClusterRecords(action string) error {
 		ChangeBatch:  &route53.ChangeBatch{Changes: changes},
 	}
 
-	result, err := s.Route53Client.ChangeResourceRecordSets(input)
+	_, err = s.Route53Client.ChangeResourceRecordSets(input)
 	if err != nil {
-		s.scope.Error(err, "failed to change records", "reason", result.ChangeInfo.String())
+		s.scope.Error(err, "failed to change records")
 		return err
 	}
 
