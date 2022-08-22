@@ -210,12 +210,15 @@ func (r *AWSClusterReconciler) reconcileDelete(ctx context.Context, clusterScope
 	controllerutil.RemoveFinalizer(awsCluster, key.DNSFinalizerName)
 	// Finally remove the finalizer
 	if err := r.Update(ctx, awsCluster); err != nil {
-		return reconcile.Result{}, err
+		clusterScope.Info("failed to remove finalizer", "reason", err.Error())
+		return reconcile.Result{
+			Requeue:      true,
+			RequeueAfter: time.Minute,
+		}, nil
 	}
-	clusterScope.Info("removed finalizer")
+	clusterScope.Info("removed finalizer, removing from queue")
 
 	return ctrl.Result{
-		Requeue:      true,
-		RequeueAfter: time.Minute * 5,
+		Requeue: false,
 	}, nil
 }
