@@ -166,13 +166,12 @@ func (s *Service) changeWorkloadClusterRecords(action string) error {
 	if IsAlreadyExists(err) {
 		// if record already exists, continue with bastion
 	} else if err != nil {
-		s.scope.Info("failed to create base DNS records", "error", err.Error())
+		s.scope.Info("failed to change base DNS records", "error", err.Error())
 		return err
 	}
 
 	// bastion is optional and the operation is transactions so all must succeed
 	if s.scope.BastionIP() != "" {
-		s.scope.Info("trying to add adding bastion record")
 		changes := []*route53.Change{
 			{
 				Action: aws.String(action),
@@ -197,11 +196,10 @@ func (s *Service) changeWorkloadClusterRecords(action string) error {
 		_, err := s.Route53Client.ChangeResourceRecordSets(input)
 		if IsAlreadyExists(err) {
 			// update record
-
 			input.ChangeBatch.Changes[0].Action = aws.String("UPSERT")
 			_, err := s.Route53Client.ChangeResourceRecordSets(input)
 			if err != nil {
-				s.scope.Info("failed to create bastion DNS records", "error", err.Error())
+				s.scope.Info("failed to update bastion DNS records", "error", err.Error())
 				return err
 			}
 
@@ -210,6 +208,7 @@ func (s *Service) changeWorkloadClusterRecords(action string) error {
 			return err
 		}
 	}
+
 	return nil
 }
 
