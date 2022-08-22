@@ -59,7 +59,7 @@ func IsNotFound(err error) bool {
 }
 
 func IsAlreadyExists(err error) bool {
-	return strings.Contains(err.Error(), "it already exists")
+	return err != nil && strings.Contains(err.Error(), "it already exists")
 }
 
 // IsAccessDenied returns true if the error is AccessDenied.

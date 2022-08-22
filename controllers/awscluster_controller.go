@@ -203,6 +203,7 @@ func (r *AWSClusterReconciler) reconcileDelete(ctx context.Context, clusterScope
 		if apierrors.IsNotFound(err) {
 			return reconcile.Result{}, nil
 		}
+
 		return reconcile.Result{}, err
 	}
 	// AWSCluster is deleted so remove the finalizer.
