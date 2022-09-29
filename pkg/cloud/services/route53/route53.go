@@ -311,6 +311,12 @@ func (s *Service) changeManagementClusterDelegation(action string) error {
 }
 
 func (s *Service) createWorkloadClusterZone() error {
+	if s.scope.PrivateZone() && s.scope.VPC() == "" {
+		s.scope.Info("VPC ID is not ready yet for Private Hosted Zone")
+		return aws.ErrMissingEndpoint
+
+	}
+
 	now := time.Now()
 	input := &route53.CreateHostedZoneInput{
 		CallerReference: aws.String(now.UTC().String()),

@@ -47,6 +47,8 @@ type AWSClusterReconciler struct {
 	Log                         logr.Logger
 	ManagementClusterARN        string
 	ManagementClusterBaseDomain string
+	ManagementClusterName       string
+	ManagementClusterNamespace  string
 	WorkloadClusterBaseDomain   string
 	Scheme                      *runtime.Scheme
 }
@@ -130,12 +132,22 @@ func (r *AWSClusterReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 		return reconcile.Result{}, errors.Errorf("failed to create scope: %+v", err)
 	}
 
+	var managementAWSCluster capa.AWSCluster
+	err = r.Get(ctx, client.ObjectKey{Name: r.ManagementClusterName, Namespace: r.ManagementClusterNamespace}, &managementAWSCluster)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			log.Error(err, "failed to get AWSCluster CR for management cluster, exiting")
+			return reconcile.Result{}, nil
+		}
+		return reconcile.Result{}, err
+	}
+
 	// Create the management cluster scope.
 	managementScope, err := scope.NewManagementClusterScope(scope.ManagementClusterScopeParams{
 		ARN:        r.ManagementClusterARN,
 		BaseDomain: r.ManagementClusterBaseDomain,
 		Logger:     log,
-		AWSCluster: awsCluster,
+		AWSCluster: &managementAWSCluster,
 	})
 	if err != nil {
 		return reconcile.Result{}, errors.Errorf("failed to create scope: %+v", err)
