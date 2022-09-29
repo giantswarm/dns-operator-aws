@@ -53,6 +53,8 @@ type ManagementClusterScoper interface {
 	BaseDomain() string
 	// InfraCluster returns the AWS infrastructure cluster object.
 	InfraCluster() ClusterObject
+	// Region returns the AWS infrastructure cluster object region.
+	Region() string
 	// VPC returns the management cluster VPC ID
 	VPC() string
 }

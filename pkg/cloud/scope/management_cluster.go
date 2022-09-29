@@ -79,6 +79,11 @@ func (s *ManagementClusterScope) InfraCluster() cloud.ClusterObject {
 	return s.AWSCluster
 }
 
+// Region returns the cluster region.
+func (s *ManagementClusterScope) Region() string {
+	return s.AWSCluster.Spec.Region
+}
+
 // Session returns the AWS SDK session. Used for creating workload cluster client.
 func (s *ManagementClusterScope) Session() awsclient.ConfigProvider {
 	return s.session
