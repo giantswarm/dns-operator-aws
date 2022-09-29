@@ -36,18 +36,25 @@ func NewClusterScope(params ClusterScopeParams) (*ClusterScope, error) {
 		params.Logger = klogr.New()
 	}
 
+	privateZone := false
+	annotation, ok := params.AWSCluster.Annotations["aws.giantswarm.io/dns-mode"]
+	if ok && annotation == "private" {
+		privateZone = true
+	}
+
 	session, err := sessionForRegion(params.AWSCluster.Spec.Region)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create aws session")
 	}
 
 	return &ClusterScope{
-		assumeRole: params.ARN,
-		AWSCluster: params.AWSCluster,
-		baseDomain: params.BaseDomain,
-		bastionIP:  params.BastionIP,
-		Logger:     params.Logger,
-		session:    session,
+		assumeRole:  params.ARN,
+		AWSCluster:  params.AWSCluster,
+		baseDomain:  params.BaseDomain,
+		bastionIP:   params.BastionIP,
+		Logger:      params.Logger,
+		privateZone: privateZone,
+		session:     session,
 	}, nil
 }
 
@@ -58,7 +65,8 @@ type ClusterScope struct {
 	baseDomain string
 	bastionIP  string
 	logr.Logger
-	session awsclient.ConfigProvider
+	privateZone bool
+	session     awsclient.ConfigProvider
 }
 
 // ARN returns the AWS SDK assumed role. Used for creating workload cluster client.
@@ -90,6 +98,11 @@ func (s *ClusterScope) Name() string {
 	return s.AWSCluster.Name
 }
 
+// PrivateZone returns true if the desired route53 Zone should be private
+func (s *ClusterScope) PrivateZone() bool {
+	return s.privateZone
+}
+
 // Region returns the cluster region.
 func (s *ClusterScope) Region() string {
 	return s.AWSCluster.Spec.Region
@@ -98,4 +111,9 @@ func (s *ClusterScope) Region() string {
 // Session returns the AWS SDK session. Used for creating workload cluster client.
 func (s *ClusterScope) Session() awsclient.ConfigProvider {
 	return s.session
+}
+
+// VPC returns the AWSCluster vpc ID
+func (s *ClusterScope) VPC() string {
+	return s.AWSCluster.Spec.NetworkSpec.VPC.ID
 }

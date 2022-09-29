@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Delete all records in teh zone before trying to delete it.
+- Delete all records in the zone before trying to delete it.
  
 ## [0.3.1] - 2022-08-22
 

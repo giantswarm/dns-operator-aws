@@ -29,9 +29,7 @@ func (s *Service) DeleteRoute53() error {
 
 	// We need to delete all records first before we can delete the hosted zone
 	err = s.deleteAllWorkloadClusterRecords("DELETE")
-	if IsNotFound(err) {
-		return nil
-	} else if err != nil {
+	if err != nil {
 		return err
 	}
 
@@ -318,10 +316,21 @@ func (s *Service) createWorkloadClusterZone() error {
 		CallerReference: aws.String(now.UTC().String()),
 		Name:            aws.String(fmt.Sprintf("%s.%s.", s.scope.Name(), s.scope.BaseDomain())),
 	}
+	if s.scope.PrivateZone() {
+		input.VPC = &route53.VPC{
+			VPCId:     aws.String(s.scope.VPC()),
+			VPCRegion: aws.String(s.scope.Region()),
+		}
+	}
 	_, err := s.Route53Client.CreateHostedZone(input)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create hosted zone for cluster: %s", s.scope.Name())
 	}
+
+	if s.scope.PrivateZone() {
+		// associate Management cluster VPC as well
+	}
+
 	return nil
 }
 

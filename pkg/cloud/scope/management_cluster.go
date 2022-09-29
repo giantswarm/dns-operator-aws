@@ -83,3 +83,8 @@ func (s *ManagementClusterScope) InfraCluster() cloud.ClusterObject {
 func (s *ManagementClusterScope) Session() awsclient.ConfigProvider {
 	return s.session
 }
+
+// VPC returns the management cluster VPC ID
+func (s *ManagementClusterScope) VPC() string {
+	return s.AWSCluster.Spec.NetworkSpec.VPC.ID
+}

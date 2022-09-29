@@ -34,8 +34,12 @@ type ClusterScoper interface {
 	InfraCluster() ClusterObject
 	// Name returns the CAPI cluster name.
 	Name() string
+	// PrivateZone returns true if the desired route53 Zone should be private
+	PrivateZone() bool
 	// Region returns the AWS infrastructure cluster object region.
 	Region() string
+	// VPC returns the AWSCluster vpc ID
+	VPC() string
 }
 
 // ManagementClusterScoper is the interface for a managemnt cluster scope
@@ -49,4 +53,6 @@ type ManagementClusterScoper interface {
 	BaseDomain() string
 	// InfraCluster returns the AWS infrastructure cluster object.
 	InfraCluster() ClusterObject
+	// VPC returns the management cluster VPC ID
+	VPC() string
 }
