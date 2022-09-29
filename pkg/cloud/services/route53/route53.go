@@ -28,7 +28,7 @@ func (s *Service) DeleteRoute53() error {
 	}
 
 	// We need to delete all records first before we can delete the hosted zone
-	err = s.changeWorkloadClusterRecords("DELETE")
+	err = s.deleteAllWorkloadClusterRecords("DELETE")
 	if IsNotFound(err) {
 		return nil
 	} else if err != nil {
@@ -207,6 +207,51 @@ func (s *Service) changeWorkloadClusterRecords(action string) error {
 			s.scope.Info("failed to change bastion DNS records", "error", err.Error())
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (s *Service) deleteAllWorkloadClusterRecords(action string) error {
+	hostZoneID, err := s.describeWorkloadClusterZone()
+	if err != nil {
+		return err
+	}
+	i := &route53.ListResourceRecordSetsInput{HostedZoneId: aws.String(hostZoneID)}
+	o, err := s.Route53Client.ListResourceRecordSets(i)
+
+	if err != nil {
+		s.scope.Error(err, "failed to list DNS records", "error", err.Error())
+		return err
+	}
+	var changes []*route53.Change
+	for _, r := range o.ResourceRecordSets {
+		// skip deletion of the undeletable default records
+		if *r.Type == "SOA" || *r.Type == "NS" {
+			continue
+		}
+		c := &route53.Change{
+			Action: aws.String(action),
+			ResourceRecordSet: &route53.ResourceRecordSet{
+				Name:            r.Name,
+				Type:            r.Type,
+				TTL:             r.TTL,
+				ResourceRecords: r.ResourceRecords,
+				AliasTarget:     r.AliasTarget,
+			},
+		}
+		changes = append(changes, c)
+	}
+
+	input := &route53.ChangeResourceRecordSetsInput{
+		HostedZoneId: aws.String(hostZoneID),
+		ChangeBatch:  &route53.ChangeBatch{Changes: changes},
+	}
+
+	_, err = s.Route53Client.ChangeResourceRecordSets(input)
+	if err != nil {
+		s.scope.Info("failed to delete DNS records", "error", err.Error())
+		return err
 	}
 
 	return nil
