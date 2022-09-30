@@ -10,6 +10,7 @@ import (
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/api/v1alpha3"
 
 	"github.com/giantswarm/dns-operator-aws/pkg/cloud"
+	"github.com/giantswarm/dns-operator-aws/pkg/key"
 )
 
 // ClusterScopeParams defines the input parameters used to create a new Scope.
@@ -40,11 +41,11 @@ func NewClusterScope(params ClusterScopeParams) (*ClusterScope, error) {
 
 	var additionalVPCToAssign []string
 	privateZone := false
-	annotation, ok := params.AWSCluster.Annotations["aws.giantswarm.io/dns-mode"]
-	if ok && annotation == "private" {
+	annotation, ok := params.AWSCluster.Annotations[key.AnnotationDNSMode]
+	if ok && annotation == key.DNSModePrivate {
 		privateZone = true
 
-		additionalVPCList, ok := params.AWSCluster.Annotations["aws.giantswarm.io/dns-assign-additional-vpc"]
+		additionalVPCList, ok := params.AWSCluster.Annotations[key.AnnotationDNSAdditionalVPC]
 		if ok {
 			additionalVPCToAssign = strings.Split(additionalVPCList, ",")
 		}
