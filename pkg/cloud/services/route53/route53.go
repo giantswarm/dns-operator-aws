@@ -334,9 +334,12 @@ func (s *Service) createWorkloadClusterZone() error {
 	}
 
 	if s.scope.PrivateZone() {
-		// associate management cluster VPC and any other specified VPCs to the provate hosted zone
+		// associate management cluster VPC and any other specified VPCs to the private hosted zone
 		vpcs := append(s.scope.AdditionalVPCToAssign(), s.managementScope.VPC())
 		for _, vpc := range vpcs {
+			if vpc == "" {
+				continue
+			}
 			i := &route53.AssociateVPCWithHostedZoneInput{
 				HostedZoneId: o.HostedZone.Id,
 				VPC: &route53.VPC{
