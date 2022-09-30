@@ -1,6 +1,8 @@
 package scope
 
 import (
+	"strings"
+
 	awsclient "github.com/aws/aws-sdk-go/aws/client"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
@@ -36,10 +38,16 @@ func NewClusterScope(params ClusterScopeParams) (*ClusterScope, error) {
 		params.Logger = klogr.New()
 	}
 
+	var additionalVPCToAssign []string
 	privateZone := false
 	annotation, ok := params.AWSCluster.Annotations["aws.giantswarm.io/dns-mode"]
 	if ok && annotation == "private" {
 		privateZone = true
+
+		additionalVPCList, ok := params.AWSCluster.Annotations["aws.giantswarm.io/dns-assign-additional-vpc"]
+		if ok {
+			additionalVPCToAssign = strings.Split(additionalVPCList, ",")
+		}
 	}
 
 	session, err := sessionForRegion(params.AWSCluster.Spec.Region)
@@ -48,22 +56,24 @@ func NewClusterScope(params ClusterScopeParams) (*ClusterScope, error) {
 	}
 
 	return &ClusterScope{
-		assumeRole:  params.ARN,
-		AWSCluster:  params.AWSCluster,
-		baseDomain:  params.BaseDomain,
-		bastionIP:   params.BastionIP,
-		Logger:      params.Logger,
-		privateZone: privateZone,
-		session:     session,
+		assumeRole:            params.ARN,
+		additionalVPCtoAssign: additionalVPCToAssign,
+		AWSCluster:            params.AWSCluster,
+		baseDomain:            params.BaseDomain,
+		bastionIP:             params.BastionIP,
+		Logger:                params.Logger,
+		privateZone:           privateZone,
+		session:               session,
 	}, nil
 }
 
 // ClusterScope defines the basic context for an actuator to operate upon.
 type ClusterScope struct {
-	assumeRole string
-	AWSCluster *infrav1.AWSCluster
-	baseDomain string
-	bastionIP  string
+	assumeRole            string
+	additionalVPCtoAssign []string
+	AWSCluster            *infrav1.AWSCluster
+	baseDomain            string
+	bastionIP             string
 	logr.Logger
 	privateZone bool
 	session     awsclient.ConfigProvider
@@ -116,4 +126,9 @@ func (s *ClusterScope) Session() awsclient.ConfigProvider {
 // VPC returns the AWSCluster vpc ID
 func (s *ClusterScope) VPC() string {
 	return s.AWSCluster.Spec.NetworkSpec.VPC.ID
+}
+
+// AdditionalVPCToAssign returns the list of extra VPC ids which should be assigned to a private hosted zone
+func (s *ClusterScope) AdditionalVPCToAssign() []string {
+	return s.additionalVPCtoAssign
 }

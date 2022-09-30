@@ -334,18 +334,20 @@ func (s *Service) createWorkloadClusterZone() error {
 	}
 
 	if s.scope.PrivateZone() {
-		// associate Management cluster VPC as well
-		i := &route53.AssociateVPCWithHostedZoneInput{
-			HostedZoneId: o.HostedZone.Id,
-			VPC: &route53.VPC{
-				VPCId:     aws.String(s.managementScope.VPC()),
-				VPCRegion: aws.String(s.managementScope.Region()),
-			},
-		}
-
-		_, err := s.Route53Client.AssociateVPCWithHostedZone(i)
-		if err != nil {
-			return errors.Wrapf(err, "failed to associate private hosted zone with management cluster, for WC cluster %s", s.scope.Name())
+		// associate management cluster VPC and any other specified VPCs to the provate hosted zone
+		vpcs := append(s.scope.AdditionalVPCToAssign(), s.managementScope.VPC())
+		for _, vpc := range vpcs {
+			i := &route53.AssociateVPCWithHostedZoneInput{
+				HostedZoneId: o.HostedZone.Id,
+				VPC: &route53.VPC{
+					VPCId:     aws.String(vpc),
+					VPCRegion: aws.String(s.managementScope.Region()),
+				},
+			}
+			_, err := s.Route53Client.AssociateVPCWithHostedZone(i)
+			if err != nil {
+				return errors.Wrapf(err, "failed to associate private hosted zone with vpc %s, for WC cluster %s", vpc, s.scope.Name())
+			}
 		}
 	}
 

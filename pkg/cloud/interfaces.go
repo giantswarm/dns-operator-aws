@@ -40,6 +40,8 @@ type ClusterScoper interface {
 	Region() string
 	// VPC returns the AWSCluster vpc ID
 	VPC() string
+	// AdditionalPCToAssign returns the list of extra VPC ids which should be assigned to a private hosted zone
+	AdditionalVPCToAssign() []string
 }
 
 // ManagementClusterScoper is the interface for a managemnt cluster scope
