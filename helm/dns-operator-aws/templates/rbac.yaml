@@ -63,6 +63,7 @@ roleRef:
   kind: ClusterRole
   name: {{ include "resource.default.name"  . }}
   apiGroup: rbac.authorization.k8s.io
+{{- if .Capabilities.APIVersions.Has "policy/v1beta1/PodSecurityPolicy" }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -72,7 +73,7 @@ metadata:
   {{- include "labels.common" . | nindent 4 }}
 rules:
 - apiGroups:
-  - extensions
+  - policy
   resources:
   - podsecuritypolicies
   verbs:
@@ -94,3 +95,4 @@ roleRef:
   kind: ClusterRole
   name: {{ include "resource.psp.name" . }}
   apiGroup: rbac.authorization.k8s.io
+{{- end }}
