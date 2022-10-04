@@ -30,17 +30,21 @@ func (s *Service) DeleteRoute53() error {
 	// We need to delete all records first before we can delete the hosted zone
 	err = s.deleteAllWorkloadClusterRecords("DELETE")
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "failed to delete")
 	}
 
-	// Finally delete DNS zone for workload cluster
-	err = s.deleteWorkloadClusterZone(hostedZoneID)
-	if IsNotFound(err) {
-		return nil
-	} else if err != nil {
-		return err
+	// delegation is only done for public zones
+	if !s.scope.PrivateZone() {
+		// Finally delete DNS zone for workload cluster
+		err = s.deleteWorkloadClusterZone(hostedZoneID)
+		if IsNotFound(err) {
+			return nil
+		} else if err != nil {
+			return err
+		}
+		s.scope.V(2).Info(fmt.Sprintf("Deleting hosted zone completed successfully for cluster %s", s.scope.Name()))
 	}
-	s.scope.V(2).Info(fmt.Sprintf("Deleting hosted zone completed successfully for cluster %s", s.scope.Name()))
+
 	return nil
 }
 
@@ -66,11 +70,14 @@ func (s *Service) ReconcileRoute53() error {
 		return err
 	}
 
-	err = s.changeManagementClusterDelegation("CREATE")
-	if IsNotFound(err) {
-		return nil
-	} else if err != nil {
-		return err
+	// delegation only make sense for public zones
+	if !s.scope.PrivateZone() {
+		err = s.changeManagementClusterDelegation("CREATE")
+		if IsNotFound(err) {
+			return nil
+		} else if err != nil {
+			return err
+		}
 	}
 
 	return nil
