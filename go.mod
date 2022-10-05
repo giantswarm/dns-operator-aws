@@ -7,6 +7,7 @@ require (
 	github.com/go-logr/logr v0.1.0
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.11.0
+	golang.org/x/text v0.3.7
 	k8s.io/api v0.17.17
 	k8s.io/apimachinery v0.17.17
 	k8s.io/client-go v0.17.17
