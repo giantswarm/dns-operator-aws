@@ -29,20 +29,22 @@ func (s *Service) DeleteRoute53() error {
 
 	// We need to delete all records first before we can delete the hosted zone
 	err = s.deleteAllWorkloadClusterRecords("DELETE")
-	if IsNotFound(err) {
-		return nil
-	} else if err != nil {
-		return err
+	if err != nil {
+		return errors.Wrapf(err, "failed to delete")
 	}
 
-	// Finally delete DNS zone for workload cluster
-	err = s.deleteWorkloadClusterZone(hostedZoneID)
-	if IsNotFound(err) {
-		return nil
-	} else if err != nil {
-		return err
+	// delegation is only done for public zones
+	if !s.scope.PrivateZone() {
+		// Finally delete DNS zone for workload cluster
+		err = s.deleteWorkloadClusterZone(hostedZoneID)
+		if IsNotFound(err) {
+			return nil
+		} else if err != nil {
+			return err
+		}
+		s.scope.V(2).Info(fmt.Sprintf("Deleting hosted zone completed successfully for cluster %s", s.scope.Name()))
 	}
-	s.scope.V(2).Info(fmt.Sprintf("Deleting hosted zone completed successfully for cluster %s", s.scope.Name()))
+
 	return nil
 }
 
@@ -68,11 +70,14 @@ func (s *Service) ReconcileRoute53() error {
 		return err
 	}
 
-	err = s.changeManagementClusterDelegation("CREATE")
-	if IsNotFound(err) {
-		return nil
-	} else if err != nil {
-		return err
+	// delegation only make sense for public zones
+	if !s.scope.PrivateZone() {
+		err = s.changeManagementClusterDelegation("CREATE")
+		if IsNotFound(err) {
+			return nil
+		} else if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -313,15 +318,49 @@ func (s *Service) changeManagementClusterDelegation(action string) error {
 }
 
 func (s *Service) createWorkloadClusterZone() error {
+	if s.scope.PrivateZone() && s.scope.VPC() == "" {
+		s.scope.Info("VPC ID is not ready yet for Private Hosted Zone")
+		return aws.ErrMissingEndpoint
+
+	}
+
 	now := time.Now()
 	input := &route53.CreateHostedZoneInput{
 		CallerReference: aws.String(now.UTC().String()),
 		Name:            aws.String(fmt.Sprintf("%s.%s.", s.scope.Name(), s.scope.BaseDomain())),
 	}
-	_, err := s.Route53Client.CreateHostedZone(input)
+	if s.scope.PrivateZone() {
+		input.VPC = &route53.VPC{
+			VPCId:     aws.String(s.scope.VPC()),
+			VPCRegion: aws.String(s.scope.Region()),
+		}
+	}
+	o, err := s.Route53Client.CreateHostedZone(input)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create hosted zone for cluster: %s", s.scope.Name())
 	}
+
+	if s.scope.PrivateZone() {
+		// associate management cluster VPC and any other specified VPCs to the private hosted zone
+		vpcs := append(s.scope.AdditionalVPCToAssign(), s.managementScope.VPC())
+		for _, vpc := range vpcs {
+			if vpc == "" {
+				continue
+			}
+			i := &route53.AssociateVPCWithHostedZoneInput{
+				HostedZoneId: o.HostedZone.Id,
+				VPC: &route53.VPC{
+					VPCId:     aws.String(vpc),
+					VPCRegion: aws.String(s.managementScope.Region()),
+				},
+			}
+			_, err := s.Route53Client.AssociateVPCWithHostedZone(i)
+			if err != nil {
+				return errors.Wrapf(err, "failed to associate private hosted zone with vpc %s, for WC cluster %s", vpc, s.scope.Name())
+			}
+		}
+	}
+
 	return nil
 }
 

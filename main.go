@@ -53,6 +53,8 @@ func main() {
 		workloadClusterBaseDomain   string
 		managementClusterARN        string
 		managementClusterBaseDomain string
+		managementClusterName       string
+		managementClusterNamespace  string
 	)
 
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
@@ -64,6 +66,8 @@ func main() {
 	flag.StringVar(&workloadClusterBaseDomain, "workload-cluster-basedomain", "", "Domain for workload cluster, e.g. installation.eu-west-1.aws.domain.tld")
 	flag.StringVar(&managementClusterARN, "management-cluster-arn", "", "Assumed role name for management cluster DNS zone delegation operation.")
 	flag.StringVar(&managementClusterBaseDomain, "management-cluster-basedomain", "", "Domain for management cluster, e.g. installation.eu-west-1.aws.domain.tld.")
+	flag.StringVar(&managementClusterName, "management-cluster-name", "", "Management cluster CR name.")
+	flag.StringVar(&managementClusterNamespace, "management-cluster-namespace", "", "Management cluster CR namespace.")
 
 	flag.Parse()
 
@@ -86,6 +90,8 @@ func main() {
 		Log:                         ctrl.Log.WithName("controllers").WithName("AWSCluster"),
 		ManagementClusterARN:        managementClusterARN,
 		ManagementClusterBaseDomain: managementClusterBaseDomain,
+		ManagementClusterName:       managementClusterName,
+		ManagementClusterNamespace:  managementClusterNamespace,
 		WorkloadClusterBaseDomain:   workloadClusterBaseDomain,
 		Scheme:                      mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {

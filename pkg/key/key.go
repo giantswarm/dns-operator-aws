@@ -10,4 +10,9 @@ const (
 	CAPAReleaseComponent                    = "cluster-api-provider-aws"
 	DNSFinalizerName                        = "dns-operator-aws.finalizers.giantswarm.io"
 	DNSZoneReady         capi.ConditionType = "DNSZoneReady"
+
+	AnnotationDNSMode          = "aws.giantswarm.io/dns-mode"
+	AnnotationDNSAdditionalVPC = "aws.giantswarm.io/dns-assign-additional-vpc"
+
+	DNSModePrivate = "private"
 )
