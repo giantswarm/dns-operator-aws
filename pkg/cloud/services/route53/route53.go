@@ -7,6 +7,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/route53"
+	"github.com/aws/aws-sdk-go/service/route53resolver"
 	"github.com/pkg/errors"
 )
 
@@ -79,6 +80,14 @@ func (s *Service) ReconcileRoute53() error {
 			return err
 		}
 	}
+
+	i := &route53resolver.AssociateResolverRuleInput{
+		Name:           aws.String("FETCH THE NAME"),
+		VPCId:          aws.String("WC VPC ID"),
+		ResolverRuleId: aws.String("FETCH TEH RESOLVER RULE ID"),
+	}
+
+	_, _ = s.Route53ResolverClient.AssociateResolverRule(i)
 
 	return nil
 }
