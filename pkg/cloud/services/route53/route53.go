@@ -81,13 +81,33 @@ func (s *Service) ReconcileRoute53() error {
 		}
 	}
 
-	i := &route53resolver.AssociateResolverRuleInput{
-		Name:           aws.String("FETCH THE NAME"),
-		VPCId:          aws.String("WC VPC ID"),
-		ResolverRuleId: aws.String("FETCH TEH RESOLVER RULE ID"),
+	i := &route53resolver.ListResolverRulesInput{
+		Filters: []*route53resolver.Filter{
+			{
+				Name:   aws.String("TYPE"),
+				Values: aws.StringSlice([]string{"FORWARDS"}),
+			},
+		},
 	}
 
-	_, _ = s.Route53ResolverClient.AssociateResolverRule(i)
+	output, err := s.Route53ResolverClient.ListResolverRules(i)
+	if err != nil {
+		return errors.Wrap(err, "failed to list AWS Resolver rule")
+	}
+
+	for _, rule := range output.ResolverRules {
+		i := &route53resolver.AssociateResolverRuleInput{
+			Name:           rule.Name,
+			VPCId:          aws.String(s.scope.VPC()),
+			ResolverRuleId: rule.Id,
+		}
+
+		_, err = s.Route53ResolverClient.AssociateResolverRule(i)
+		if err != nil {
+			return errors.Wrapf(err, "failed to assign resolver rule %s to VPC %s", rule.Name, s.scope.VPC())
+		}
+
+	}
 
 	return nil
 }
