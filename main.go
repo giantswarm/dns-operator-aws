@@ -90,7 +90,7 @@ func main() {
 
 	if err = (&controllers.AWSClusterReconciler{
 		Client:                      mgr.GetClient(),
-		AssignResolverRules:         associateResolverRules,
+		AssociateResolverRules:      associateResolverRules,
 		Log:                         ctrl.Log.WithName("controllers").WithName("AWSCluster"),
 		ManagementClusterARN:        managementClusterARN,
 		ManagementClusterBaseDomain: managementClusterBaseDomain,
