@@ -6,6 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/route53"
+	"github.com/aws/aws-sdk-go/service/route53resolver"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/component-base/version"
 
@@ -27,6 +28,16 @@ func NewRoute53Client(session cloud.Session, arn string, target runtime.Object) 
 	Route53Client.Handlers.Complete.PushBack(recordAWSPermissionsIssue(target))
 
 	return Route53Client
+}
+
+// NewRoute53ResolverClient creates a new Route53 API client for a given session
+func NewRoute53ResolverClient(session cloud.Session, arn string, target runtime.Object) *route53resolver.Route53Resolver {
+	Route53ResolverClient := route53resolver.New(session.Session(), &aws.Config{Credentials: stscreds.NewCredentials(session.Session(), arn)})
+	Route53ResolverClient.Handlers.Build.PushFrontNamed(getUserAgentHandler())
+	Route53ResolverClient.Handlers.CompleteAttempt.PushFront(awsmetrics.CaptureRequestMetrics("dns-operator-aws"))
+	Route53ResolverClient.Handlers.Complete.PushBack(recordAWSPermissionsIssue(target))
+
+	return Route53ResolverClient
 }
 
 func getUserAgentHandler() request.NamedHandler {

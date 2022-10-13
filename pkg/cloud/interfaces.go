@@ -23,6 +23,8 @@ type ClusterScoper interface {
 
 	// ARN returns the workload cluster assumed role to operate.
 	ARN() string
+	// AssociateResolverRules enables assigning all resolver rules to workload cluster VPC
+	AssociateResolverRules() bool
 	// APIEndpoint returns the AWS infrastructure Kubernetes LoadBalancer API endpoint.
 	// e.g. apiserver-x.eu-central-1.elb.amazonaws.com
 	APIEndpoint() string
@@ -40,7 +42,7 @@ type ClusterScoper interface {
 	Region() string
 	// VPC returns the AWSCluster vpc ID
 	VPC() string
-	// AdditionalPCToAssign returns the list of extra VPC ids which should be assigned to a private hosted zone
+	// AdditionalVPCToAssign returns the list of extra VPC ids which should be assigned to a private hosted zone
 	AdditionalVPCToAssign() []string
 }
 

@@ -48,6 +48,7 @@ func init() {
 
 func main() {
 	var (
+		associateResolverRules      bool
 		enableLeaderElection        bool
 		metricsAddr                 string
 		workloadClusterBaseDomain   string
@@ -56,7 +57,9 @@ func main() {
 		managementClusterName       string
 		managementClusterNamespace  string
 	)
-
+	flag.BoolVar(&associateResolverRules, "associate-resolver-rules", false,
+		"Enable associating all resolver rules in aws account to the workload cluster VPC "+
+			"Enabling this will ensure there is only one active controller manager.")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
@@ -87,6 +90,7 @@ func main() {
 
 	if err = (&controllers.AWSClusterReconciler{
 		Client:                      mgr.GetClient(),
+		AssociateResolverRules:      associateResolverRules,
 		Log:                         ctrl.Log.WithName("controllers").WithName("AWSCluster"),
 		ManagementClusterARN:        managementClusterARN,
 		ManagementClusterBaseDomain: managementClusterBaseDomain,

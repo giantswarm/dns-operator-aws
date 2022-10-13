@@ -7,6 +7,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/route53"
+	"github.com/aws/aws-sdk-go/service/route53resolver"
 	"github.com/pkg/errors"
 )
 
@@ -79,7 +80,37 @@ func (s *Service) ReconcileRoute53() error {
 			return err
 		}
 	}
+	// Associate resolver rules
+	if s.scope.AssociateResolverRules() {
+		i := &route53resolver.ListResolverRulesInput{
+			Filters: []*route53resolver.Filter{
+				{
+					Name:   aws.String("TYPE"),
+					Values: aws.StringSlice([]string{"FORWARD"}),
+				},
+			},
+		}
 
+		output, err := s.Route53ResolverClient.ListResolverRules(i)
+		if err != nil {
+			return errors.Wrap(err, "failed to list AWS Resolver rule")
+		}
+
+		for _, rule := range output.ResolverRules {
+			i := &route53resolver.AssociateResolverRuleInput{
+				Name:           rule.Name,
+				VPCId:          aws.String(s.scope.VPC()),
+				ResolverRuleId: rule.Id,
+			}
+
+			_, err = s.Route53ResolverClient.AssociateResolverRule(i)
+			if err != nil {
+				return errors.Wrapf(err, "failed to assign resolver rule %s to VPC %s", *rule.Name, s.scope.VPC())
+			}
+			// DEBUG
+			fmt.Printf("associated rule %s for domain %s to %s\n", *rule.Name, *rule.DomainName, s.scope.VPC())
+		}
+	}
 	return nil
 }
 

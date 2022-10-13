@@ -15,6 +15,9 @@ registry:
 managementClusterName: ""
 managementClusterNamespace: ""
 
+
+associateResolveRules: false
+
 pod:
   user:
     id: 1000

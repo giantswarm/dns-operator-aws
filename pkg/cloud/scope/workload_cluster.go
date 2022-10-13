@@ -15,12 +15,13 @@ import (
 
 // ClusterScopeParams defines the input parameters used to create a new Scope.
 type ClusterScopeParams struct {
-	ARN        string
-	AWSCluster *infrav1.AWSCluster
-	BaseDomain string
-	BastionIP  string
-	Logger     logr.Logger
-	Session    awsclient.ConfigProvider
+	ARN                    string
+	AssociateResolverRules bool
+	AWSCluster             *infrav1.AWSCluster
+	BaseDomain             string
+	BastionIP              string
+	Logger                 logr.Logger
+	Session                awsclient.ConfigProvider
 }
 
 // NewClusterScope creates a new Scope from the supplied parameters.
@@ -57,24 +58,26 @@ func NewClusterScope(params ClusterScopeParams) (*ClusterScope, error) {
 	}
 
 	return &ClusterScope{
-		assumeRole:            params.ARN,
-		additionalVPCtoAssign: additionalVPCToAssign,
-		AWSCluster:            params.AWSCluster,
-		baseDomain:            params.BaseDomain,
-		bastionIP:             params.BastionIP,
-		Logger:                params.Logger,
-		privateZone:           privateZone,
-		session:               session,
+		assumeRole:             params.ARN,
+		associateResolverRules: params.AssociateResolverRules,
+		additionalVPCtoAssign:  additionalVPCToAssign,
+		AWSCluster:             params.AWSCluster,
+		baseDomain:             params.BaseDomain,
+		bastionIP:              params.BastionIP,
+		Logger:                 params.Logger,
+		privateZone:            privateZone,
+		session:                session,
 	}, nil
 }
 
 // ClusterScope defines the basic context for an actuator to operate upon.
 type ClusterScope struct {
-	assumeRole            string
-	additionalVPCtoAssign []string
-	AWSCluster            *infrav1.AWSCluster
-	baseDomain            string
-	bastionIP             string
+	assumeRole             string
+	associateResolverRules bool
+	additionalVPCtoAssign  []string
+	AWSCluster             *infrav1.AWSCluster
+	baseDomain             string
+	bastionIP              string
 	logr.Logger
 	privateZone bool
 	session     awsclient.ConfigProvider
@@ -83,6 +86,11 @@ type ClusterScope struct {
 // ARN returns the AWS SDK assumed role. Used for creating workload cluster client.
 func (s *ClusterScope) ARN() string {
 	return s.assumeRole
+}
+
+// AssociateResolverRules enables assigning all resolver rules to workload cluster VPC
+func (s *ClusterScope) AssociateResolverRules() bool {
+	return s.associateResolverRules
 }
 
 // APIEndpoint returns the AWS infrastructure Kubernetes API endpoint.
