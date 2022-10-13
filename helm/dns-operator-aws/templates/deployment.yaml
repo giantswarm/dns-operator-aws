@@ -41,13 +41,14 @@ spec:
         - --management-cluster-namespace={{ .Values.managementClusterNamespace }}
         - --management-cluster-name={{ .Values.managementClusterName  }}
         - --workload-cluster-basedomain={{ .Values.workloadClusterBaseDomain }}
+        - --associate-resolver-rules={{ .Values.associateResolveRules }}
         resources:
           requests:
             cpu: 100m
-            memory: 50Mi
+            memory: 100Mi
           limits:
             cpu: 100m
-            memory: 80Mi
+            memory: 150Mi
         volumeMounts:
         - mountPath: /home/.aws
           name: credentials
