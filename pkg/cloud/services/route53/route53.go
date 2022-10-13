@@ -107,8 +107,6 @@ func (s *Service) ReconcileRoute53() error {
 			if err != nil {
 				return errors.Wrapf(err, "failed to assign resolver rule %s to VPC %s", *rule.Name, s.scope.VPC())
 			}
-			// DEBUG
-			fmt.Printf("associated rule %s for domain %s to %s\n", *rule.Name, *rule.DomainName, s.scope.VPC())
 		}
 	}
 	return nil
