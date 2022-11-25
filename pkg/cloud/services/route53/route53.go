@@ -419,7 +419,7 @@ func (s *Service) deleteWorkloadClusterZone(hostedZoneID string) error {
 
 func (s *Service) associationsHasRule(associations []*route53resolver.ResolverRuleAssociation, rule *route53resolver.ResolverRule) bool {
 	for _, a := range associations {
-		if a.ResolverRuleId == rule.Id && (a.Status == aws.String(route53resolver.ResolverRuleAssociationStatusCreating) || a.Status == aws.String(route53resolver.ResolverQueryLogConfigStatusCreated)) {
+		if a.ResolverRuleId == rule.Id && (a.Status == aws.String(route53resolver.ResolverRuleAssociationStatusCreating) || a.Status == aws.String(route53resolver.ResolverRuleAssociationStatusComplete)) {
 			return true
 		}
 	}
