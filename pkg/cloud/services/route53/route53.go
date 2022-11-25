@@ -444,7 +444,7 @@ func (s *Service) getResolverRuleAssociations(nextToken *string) ([]*route53reso
 
 func (s *Service) associationsHasRule(associations []*route53resolver.ResolverRuleAssociation, rule *route53resolver.ResolverRule) bool {
 	for _, a := range associations {
-		if a.ResolverRuleId == rule.Id && (a.Status == aws.String(route53resolver.ResolverRuleAssociationStatusCreating) || a.Status == aws.String(route53resolver.ResolverRuleAssociationStatusComplete)) {
+		if *a.ResolverRuleId == *rule.Id && (*a.Status == route53resolver.ResolverRuleAssociationStatusCreating || *a.Status == route53resolver.ResolverRuleAssociationStatusComplete) {
 			return true
 		}
 	}
