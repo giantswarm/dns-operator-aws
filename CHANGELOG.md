@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Ensure all resolve rule assocations are fetched if there are more results that a single call allows
+
 ## [0.4.3] - 2022-11-25
 
 ### Fixed
