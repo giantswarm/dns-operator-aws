@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fix leaking Route53 hosted zones for private clusters.
+- Check for existing route53 resolve rule associations before trying to associate
 
 ## [0.4.1] - 2022-10-13
 
@@ -22,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Delete all records in the zone before trying to delete it.
 - `PodSecurityPolicy` are removed on newer k8s versions, so only apply it if object is registered in the k8s API.
- 
+
 ## [0.3.1] - 2022-08-22
 
 ### Fixed
