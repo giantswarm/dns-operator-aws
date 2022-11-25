@@ -95,6 +95,18 @@ func (s *Service) ReconcileRoute53() error {
 			return errors.Wrap(err, "failed to list AWS Resolver rule")
 		}
 
+		associations, err := s.Route53ResolverClient.ListResolverRuleAssociations(&route53resolver.ListResolverRuleAssociationsInput{
+			Filters: []*route53resolver.Filter{
+				{
+					Name:   aws.String("VPCId"),
+					Values: []*string{aws.String(s.scope.VPC())},
+				},
+			},
+		})
+		if err != nil {
+			return errors.Wrap(err, "failed to list AWS Resolver rule associations")
+		}
+
 		for _, rule := range output.ResolverRules {
 			i := &route53resolver.AssociateResolverRuleInput{
 				Name:           rule.Name,
@@ -102,9 +114,11 @@ func (s *Service) ReconcileRoute53() error {
 				ResolverRuleId: rule.Id,
 			}
 
-			_, err = s.Route53ResolverClient.AssociateResolverRule(i)
-			if err != nil {
-				return errors.Wrapf(err, "failed to assign resolver rule %s to VPC %s", *rule.Name, s.scope.VPC())
+			if !s.associationsHasRule(associations.ResolverRuleAssociations, rule) {
+				_, err = s.Route53ResolverClient.AssociateResolverRule(i)
+				if err != nil {
+					return errors.Wrapf(err, "failed to assign resolver rule %s to VPC %s", *rule.Name, s.scope.VPC())
+				}
 			}
 		}
 	}
@@ -401,4 +415,13 @@ func (s *Service) deleteWorkloadClusterZone(hostedZoneID string) error {
 		return errors.Wrapf(err, "failed to delete hosted zone for cluster: %s", s.scope.Name())
 	}
 	return nil
+}
+
+func (s *Service) associationsHasRule(associations []*route53resolver.ResolverRuleAssociation, rule *route53resolver.ResolverRule) bool {
+	for _, a := range associations {
+		if a.ResolverRuleId == rule.Id && (a.Status == aws.String(route53resolver.ResolverRuleAssociationStatusCreating) || a.Status == aws.String(route53resolver.ResolverQueryLogConfigStatusCreated)) {
+			return true
+		}
+	}
+	return false
 }
