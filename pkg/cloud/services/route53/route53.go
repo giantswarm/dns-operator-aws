@@ -99,7 +99,7 @@ func (s *Service) ReconcileRoute53() error {
 		if err != nil {
 			return err
 		}
-		s.scope.Info("Got resolver rule assocations", "associations", associations)
+		s.scope.V(2).Info("Got resolver rule assocations", "associations", associations)
 
 		for _, rule := range output.ResolverRules {
 			if !s.associationsHasRule(associations, rule) {
