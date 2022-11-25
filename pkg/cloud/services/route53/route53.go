@@ -99,9 +99,11 @@ func (s *Service) ReconcileRoute53() error {
 		if err != nil {
 			return err
 		}
+		s.scope.Info("Got resolver rule assocations", "associations", associations)
 
 		for _, rule := range output.ResolverRules {
 			if !s.associationsHasRule(associations, rule) {
+				s.scope.Info("No existing resolver rule association found, associating now", "rule", rule)
 				i := &route53resolver.AssociateResolverRuleInput{
 					Name:           rule.Name,
 					VPCId:          aws.String(s.scope.VPC()),
@@ -410,6 +412,7 @@ func (s *Service) deleteWorkloadClusterZone(hostedZoneID string) error {
 }
 
 func (s *Service) getResolverRuleAssociations(nextToken *string) ([]*route53resolver.ResolverRuleAssociation, error) {
+	s.scope.Info("Fetching resolver rule associations", "nextToken", nextToken)
 	ruleAssociations := []*route53resolver.ResolverRuleAssociation{}
 
 	associations, err := s.Route53ResolverClient.ListResolverRuleAssociations(&route53resolver.ListResolverRuleAssociationsInput{
