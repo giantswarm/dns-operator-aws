@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix leaking Route53 hosted zones for private clusters.
+
 ## [0.4.1] - 2022-10-13
 
 ### Added
