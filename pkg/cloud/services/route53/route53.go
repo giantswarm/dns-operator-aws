@@ -20,6 +20,7 @@ func (s *Service) DeleteRoute53() error {
 		return err
 	}
 
+	// delegation is only done for public zones
 	if !s.scope.PrivateZone() {
 		// First delete delegation record from managament
 		err = s.changeManagementClusterDelegation("DELETE")
@@ -34,8 +35,6 @@ func (s *Service) DeleteRoute53() error {
 	if err != nil {
 		return errors.Wrapf(err, "failed to delete")
 	}
-
-	// delegation is only done for public zones
 
 	// Finally delete DNS zone for workload cluster
 	err = s.deleteWorkloadClusterZone(hostedZoneID)
