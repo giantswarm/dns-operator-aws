@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.5] - 2022-11-25
+
+### Fixed
+
+- Correctly compare resolve rule and associations
+
+## [0.4.4] - 2022-11-25
+
+### Fixed
+
+- Ensure all resolve rule assocations are fetched if there are more results that a single call allows
+
+## [0.4.3] - 2022-11-25
+
+### Fixed
+
+- Typo in association check
+
+## [0.4.2] - 2022-11-25
+
+### Fixed
+
+- Fix leaking Route53 hosted zones for private clusters.
+- Check for existing route53 resolve rule associations before trying to associate
+
 ## [0.4.1] - 2022-10-13
 
 ### Added
@@ -18,7 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Delete all records in the zone before trying to delete it.
 - `PodSecurityPolicy` are removed on newer k8s versions, so only apply it if object is registered in the k8s API.
- 
+
 ## [0.3.1] - 2022-08-22
 
 ### Fixed
@@ -55,7 +80,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2021-10-14
 
 
-[Unreleased]: https://github.com/giantswarm/dns-operator-aws/compare/v0.4.1...HEAD
+[Unreleased]: https://github.com/giantswarm/dns-operator-aws/compare/v0.4.5...HEAD
+[0.4.5]: https://github.com/giantswarm/dns-operator-aws/compare/v0.4.4...v0.4.5
+[0.4.4]: https://github.com/giantswarm/dns-operator-aws/compare/v0.4.3...v0.4.4
+[0.4.3]: https://github.com/giantswarm/dns-operator-aws/compare/v0.4.2...v0.4.3
+[0.4.2]: https://github.com/giantswarm/dns-operator-aws/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/giantswarm/dns-operator-aws/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/giantswarm/dns-operator-aws/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/giantswarm/dns-operator-aws/compare/v0.3.0...v0.3.1

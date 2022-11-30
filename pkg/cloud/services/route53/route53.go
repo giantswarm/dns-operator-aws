@@ -20,31 +20,30 @@ func (s *Service) DeleteRoute53() error {
 		return err
 	}
 
-	// First delete delegation record from managament
-	err = s.changeManagementClusterDelegation("DELETE")
-	if IsNotFound(err) {
-		return nil
-	} else if err != nil {
-		return err
+	// delegation is only done for public zones
+	if !s.scope.PrivateZone() {
+		// First delete delegation record from managament
+		err = s.changeManagementClusterDelegation("DELETE")
+		if IsNotFound(err) {
+			return nil
+		} else if err != nil {
+			return err
+		}
 	}
-
 	// We need to delete all records first before we can delete the hosted zone
 	err = s.deleteAllWorkloadClusterRecords("DELETE")
 	if err != nil {
 		return errors.Wrapf(err, "failed to delete")
 	}
 
-	// delegation is only done for public zones
-	if !s.scope.PrivateZone() {
-		// Finally delete DNS zone for workload cluster
-		err = s.deleteWorkloadClusterZone(hostedZoneID)
-		if IsNotFound(err) {
-			return nil
-		} else if err != nil {
-			return err
-		}
-		s.scope.V(2).Info(fmt.Sprintf("Deleting hosted zone completed successfully for cluster %s", s.scope.Name()))
+	// Finally delete DNS zone for workload cluster
+	err = s.deleteWorkloadClusterZone(hostedZoneID)
+	if IsNotFound(err) {
+		return nil
+	} else if err != nil {
+		return err
 	}
+	s.scope.V(2).Info(fmt.Sprintf("Deleting hosted zone completed successfully for cluster %s", s.scope.Name()))
 
 	return nil
 }
@@ -96,18 +95,26 @@ func (s *Service) ReconcileRoute53() error {
 			return errors.Wrap(err, "failed to list AWS Resolver rule")
 		}
 
+		associations, err := s.getResolverRuleAssociations(nil)
+		if err != nil {
+			return err
+		}
+		s.scope.V(2).Info("Got resolver rule assocations", "associations", associations)
+
 		managementClusterAccountID := s.managementScope.AccountID()
 		for _, rule := range output.ResolverRules {
-			i := &route53resolver.AssociateResolverRuleInput{
-				Name:           rule.Name,
-				VPCId:          aws.String(s.scope.VPC()),
-				ResolverRuleId: rule.Id,
-			}
-
-			if managementClusterAccountID == *rule.OwnerId || managementClusterAccountID == "" {
-				_, err = s.Route53ResolverClient.AssociateResolverRule(i)
-				if err != nil {
-					return errors.Wrapf(err, "failed to assign resolver rule %s to VPC %s", *rule.Name, s.scope.VPC())
+			if !s.associationsHasRule(associations, rule) {
+				s.scope.Info("No existing resolver rule association found, associating now", "rule", rule)
+				i := &route53resolver.AssociateResolverRuleInput{
+					Name:           rule.Name,
+					VPCId:          aws.String(s.scope.VPC()),
+					ResolverRuleId: rule.Id,
+				}
+				if managementClusterAccountID == *rule.OwnerId || managementClusterAccountID == "" {
+					_, err = s.Route53ResolverClient.AssociateResolverRule(i)
+					if err != nil {
+						return errors.Wrapf(err, "failed to assign resolver rule %s to VPC %s", *rule.Name, s.scope.VPC())
+					}
 				}
 			}
 		}
@@ -405,4 +412,44 @@ func (s *Service) deleteWorkloadClusterZone(hostedZoneID string) error {
 		return errors.Wrapf(err, "failed to delete hosted zone for cluster: %s", s.scope.Name())
 	}
 	return nil
+}
+
+func (s *Service) getResolverRuleAssociations(nextToken *string) ([]*route53resolver.ResolverRuleAssociation, error) {
+	s.scope.Info("Fetching resolver rule associations", "nextToken", nextToken)
+	ruleAssociations := []*route53resolver.ResolverRuleAssociation{}
+
+	associations, err := s.Route53ResolverClient.ListResolverRuleAssociations(&route53resolver.ListResolverRuleAssociationsInput{
+		MaxResults: aws.Int64(100),
+		Filters: []*route53resolver.Filter{
+			{
+				Name:   aws.String("VPCId"),
+				Values: []*string{aws.String(s.scope.VPC())},
+			},
+		},
+		NextToken: nextToken,
+	})
+	if err != nil {
+		return ruleAssociations, errors.Wrap(err, "failed to list AWS Resolver rule associations")
+	}
+	ruleAssociations = append(ruleAssociations, associations.ResolverRuleAssociations...)
+
+	// If we have more than we can query in one call we need to recursively keep calling until we have all associations
+	if associations.NextToken != nil && *associations.NextToken != "" {
+		next, err := s.getResolverRuleAssociations(associations.NextToken)
+		if err != nil {
+			return ruleAssociations, errors.Wrap(err, "failed to list AWS Resolver rule associations")
+		}
+		ruleAssociations = append(ruleAssociations, next...)
+	}
+
+	return ruleAssociations, err
+}
+
+func (s *Service) associationsHasRule(associations []*route53resolver.ResolverRuleAssociation, rule *route53resolver.ResolverRule) bool {
+	for _, a := range associations {
+		if *a.ResolverRuleId == *rule.Id && (*a.Status == route53resolver.ResolverRuleAssociationStatusCreating || *a.Status == route53resolver.ResolverRuleAssociationStatusComplete) {
+			return true
+		}
+	}
+	return false
 }
