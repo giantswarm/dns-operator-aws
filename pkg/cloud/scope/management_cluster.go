@@ -19,6 +19,7 @@ type ManagementClusterScopeParams struct {
 	BaseDomain string
 	Logger     logr.Logger
 	Session    awsclient.ConfigProvider
+	AccountID  string
 }
 
 // NewManagementClusterScope creates a new Scope from the supplied parameters.
@@ -52,6 +53,7 @@ func NewManagementClusterScope(params ManagementClusterScopeParams) (*Management
 		baseDomain: params.BaseDomain,
 		Logger:     params.Logger,
 		session:    session,
+		accountID:  params.AccountID,
 	}, nil
 }
 
@@ -61,7 +63,8 @@ type ManagementClusterScope struct {
 	AWSCluster *infrav1.AWSCluster
 	baseDomain string
 	logr.Logger
-	session awsclient.ConfigProvider
+	session   awsclient.ConfigProvider
+	accountID string
 }
 
 // ARN returns the AWS SDK assumed role. Used for creating workload cluster client.
@@ -92,4 +95,9 @@ func (s *ManagementClusterScope) Session() awsclient.ConfigProvider {
 // VPC returns the management cluster VPC ID
 func (s *ManagementClusterScope) VPC() string {
 	return s.AWSCluster.Spec.NetworkSpec.VPC.ID
+}
+
+// AccountID returns the management cluster Account ID
+func (s *ManagementClusterScope) AccountID() string {
+	return s.accountID
 }

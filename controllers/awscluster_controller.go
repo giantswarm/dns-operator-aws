@@ -44,6 +44,7 @@ import (
 type AWSClusterReconciler struct {
 	client.Client
 
+	AccountID                   string
 	AssociateResolverRules      bool
 	Log                         logr.Logger
 	ManagementClusterARN        string

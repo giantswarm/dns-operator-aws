@@ -61,4 +61,6 @@ type ManagementClusterScoper interface {
 	Region() string
 	// VPC returns the management cluster VPC ID
 	VPC() string
+	// AccountID returns the management cluster Account ID
+	AccountID() string
 }

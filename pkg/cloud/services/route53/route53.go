@@ -96,6 +96,7 @@ func (s *Service) ReconcileRoute53() error {
 			return errors.Wrap(err, "failed to list AWS Resolver rule")
 		}
 
+		managementClusterAccountID := s.managementScope.AccountID()
 		for _, rule := range output.ResolverRules {
 			i := &route53resolver.AssociateResolverRuleInput{
 				Name:           rule.Name,
@@ -103,9 +104,11 @@ func (s *Service) ReconcileRoute53() error {
 				ResolverRuleId: rule.Id,
 			}
 
-			_, err = s.Route53ResolverClient.AssociateResolverRule(i)
-			if err != nil {
-				return errors.Wrapf(err, "failed to assign resolver rule %s to VPC %s", *rule.Name, s.scope.VPC())
+			if managementClusterAccountID == *rule.OwnerId || managementClusterAccountID == "" {
+				_, err = s.Route53ResolverClient.AssociateResolverRule(i)
+				if err != nil {
+					return errors.Wrapf(err, "failed to assign resolver rule %s to VPC %s", *rule.Name, s.scope.VPC())
+				}
 			}
 		}
 	}
