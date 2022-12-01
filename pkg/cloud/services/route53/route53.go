@@ -81,17 +81,28 @@ func (s *Service) ReconcileRoute53() error {
 	}
 
 	// Associate resolver rules
+
+	err = s.associateResolverRules()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// associateResolverRules takes all the resolver rules and try to associate them with the workload cluster VPC.
+func (s *Service) associateResolverRules() error {
 	if s.scope.AssociateResolverRules() {
 		resolverRules, err := s.listResolverRules()
 		if err != nil {
-			return err
+			return errors.Wrap(err, "failed to list AWS Resolver rule")
 		}
 
 		associations, err := s.getResolverRuleAssociations(nil)
 		if err != nil {
 			return err
 		}
-		s.scope.V(2).Info("Got resolver rule assocations", "associations", associations)
+		s.scope.V(2).Info("Got resolver rule associations", "associations", associations)
 
 		for _, rule := range resolverRules {
 			if !s.associationsHasRule(associations, rule) {
@@ -108,7 +119,41 @@ func (s *Service) ReconcileRoute53() error {
 			}
 		}
 	}
+
 	return nil
+}
+
+// getResolverRules fetches all the resolver rules of type FORWARD.
+func (s *Service) getResolverRules() (*route53resolver.ListResolverRulesOutput, error) {
+	var resolverRulesInput *route53resolver.ListResolverRulesInput
+	var resolverRulesOutput *route53resolver.ListResolverRulesOutput
+	var err error
+
+	resolverRulesInput = &route53resolver.ListResolverRulesInput{
+		MaxResults: aws.Int64(100),
+		Filters: []*route53resolver.Filter{
+			{
+				Name:   aws.String("TYPE"),
+				Values: aws.StringSlice([]string{"FORWARD"}),
+			},
+		},
+	}
+	// Fetch first page of resolver rules.
+	resolverRulesOutput, err = s.Route53ResolverClient.ListResolverRules(resolverRulesInput)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to list resolver rules")
+	}
+
+	// If the response contains `NexToken` we need to send another request with the response token to get the next page.
+	for resolverRulesOutput.NextToken != nil && *resolverRulesOutput.NextToken != "" {
+		resolverRulesInput.NextToken = resolverRulesOutput.NextToken
+		resolverRulesOutput, err = s.Route53ResolverClient.ListResolverRules(resolverRulesInput)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to list resolver rules")
+		}
+	}
+
+	return resolverRulesOutput, nil
 }
 
 func (s *Service) describeWorkloadClusterZone() (string, error) {
@@ -150,6 +195,10 @@ func (s *Service) listWorkloadClusterNSRecords() ([]*route53.ResourceRecord, err
 	return output.ResourceRecordSets[0].ResourceRecords, nil
 }
 
+// changeWorkloadClusterRecords creates the DNS records required by the workload cluster like
+// - a wildcard `CNAME` record pointing to the ingress record
+// - an `A` dns record 'api' pointing to the control plane LB
+// - optionally an `A` dns record 'bastion1' pointing to the bastion machine IP
 func (s *Service) changeWorkloadClusterRecords(action string) error {
 	s.scope.Info(s.scope.APIEndpoint())
 	if s.scope.APIEndpoint() == "" {
