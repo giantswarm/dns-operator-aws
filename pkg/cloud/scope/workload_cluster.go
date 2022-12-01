@@ -146,6 +146,6 @@ func (s *ClusterScope) AdditionalVPCToAssign() []string {
 }
 
 // DnsRulesCreatorAccount returns the account id to be used to filter dns rules associations
-func (s *ClusterScope) DnsRulesOwnerAccountId() string {
+func (s *ClusterScope) DnsRulesCreatorAccount() string {
 	return s.dnsRulesOwnerAccountId
 }
