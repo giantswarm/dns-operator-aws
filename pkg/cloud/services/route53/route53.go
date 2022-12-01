@@ -445,22 +445,14 @@ func (s *Service) associationsHasRule(associations []*route53resolver.ResolverRu
 
 func (s *Service) listResolverRules() ([]*route53resolver.ResolverRule, error) {
 	filteredRules := make([]*route53resolver.ResolverRule, 0)
-	filters := []*route53resolver.Filter{
-		{
-			Name:   aws.String("TYPE"),
-			Values: aws.StringSlice([]string{"FORWARD"}),
-		},
-	}
-
-	if s.scope.DnsRulesCreatorAccount() != "" {
-		filters = append(filters, &route53resolver.Filter{
-			Name:   aws.String(""),
-			Values: aws.StringSlice([]string{""}),
-		})
-	}
 
 	i := &route53resolver.ListResolverRulesInput{
-		Filters: filters,
+		Filters: []*route53resolver.Filter{
+			{
+				Name:   aws.String("TYPE"),
+				Values: aws.StringSlice([]string{"FORWARD"}),
+			},
+		},
 	}
 
 	output, err := s.Route53ResolverClient.ListResolverRules(i)
