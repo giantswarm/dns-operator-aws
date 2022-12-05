@@ -79,20 +79,12 @@ func (s *Service) ReconcileRoute53() error {
 			return err
 		}
 	}
+
 	// Associate resolver rules
 	if s.scope.AssociateResolverRules() {
-		i := &route53resolver.ListResolverRulesInput{
-			Filters: []*route53resolver.Filter{
-				{
-					Name:   aws.String("TYPE"),
-					Values: aws.StringSlice([]string{"FORWARD"}),
-				},
-			},
-		}
-
-		output, err := s.Route53ResolverClient.ListResolverRules(i)
+		resolverRules, err := s.listResolverRules()
 		if err != nil {
-			return errors.Wrap(err, "failed to list AWS Resolver rule")
+			return err
 		}
 
 		associations, err := s.getResolverRuleAssociations(nil)
@@ -101,7 +93,7 @@ func (s *Service) ReconcileRoute53() error {
 		}
 		s.scope.V(2).Info("Got resolver rule assocations", "associations", associations)
 
-		for _, rule := range output.ResolverRules {
+		for _, rule := range resolverRules {
 			if !s.associationsHasRule(associations, rule) {
 				s.scope.Info("No existing resolver rule association found, associating now", "rule", rule)
 				i := &route53resolver.AssociateResolverRuleInput{
@@ -449,4 +441,34 @@ func (s *Service) associationsHasRule(associations []*route53resolver.ResolverRu
 		}
 	}
 	return false
+}
+
+func (s *Service) listResolverRules() ([]*route53resolver.ResolverRule, error) {
+	filteredRules := make([]*route53resolver.ResolverRule, 0)
+
+	i := &route53resolver.ListResolverRulesInput{
+		Filters: []*route53resolver.Filter{
+			{
+				Name:   aws.String("TYPE"),
+				Values: aws.StringSlice([]string{"FORWARD"}),
+			},
+		},
+	}
+
+	output, err := s.Route53ResolverClient.ListResolverRules(i)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to list AWS Resolver rule")
+	}
+
+	creatorID := s.scope.DnsRulesCreatorAccount()
+	if creatorID != "" {
+		for _, rule := range output.ResolverRules {
+			if *(rule.OwnerId) == creatorID {
+				filteredRules = append(filteredRules, rule)
+			}
+		}
+		return filteredRules, nil
+	}
+
+	return output.ResolverRules, err
 }

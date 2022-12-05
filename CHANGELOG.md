@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add conditional associtation of resolver rules according to account id
+
 ## [0.4.5] - 2022-11-25
 
 ### Fixed

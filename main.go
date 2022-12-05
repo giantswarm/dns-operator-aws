@@ -49,6 +49,7 @@ func init() {
 func main() {
 	var (
 		associateResolverRules      bool
+		dnsRulesOwnerAccountId      string
 		enableLeaderElection        bool
 		metricsAddr                 string
 		workloadClusterBaseDomain   string
@@ -71,7 +72,7 @@ func main() {
 	flag.StringVar(&managementClusterBaseDomain, "management-cluster-basedomain", "", "Domain for management cluster, e.g. installation.eu-west-1.aws.domain.tld.")
 	flag.StringVar(&managementClusterName, "management-cluster-name", "", "Management cluster CR name.")
 	flag.StringVar(&managementClusterNamespace, "management-cluster-namespace", "", "Management cluster CR namespace.")
-
+	flag.StringVar(&dnsRulesOwnerAccountId, "account-id", "", "id of the dns rules creator account")
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
@@ -90,6 +91,7 @@ func main() {
 
 	if err = (&controllers.AWSClusterReconciler{
 		Client:                      mgr.GetClient(),
+		DnsRulesOwnerAccountId:      dnsRulesOwnerAccountId,
 		AssociateResolverRules:      associateResolverRules,
 		Log:                         ctrl.Log.WithName("controllers").WithName("AWSCluster"),
 		ManagementClusterARN:        managementClusterARN,

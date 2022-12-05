@@ -22,6 +22,7 @@ type ClusterScopeParams struct {
 	BastionIP              string
 	Logger                 logr.Logger
 	Session                awsclient.ConfigProvider
+	DnsRulesOwnerAccountId string
 }
 
 // NewClusterScope creates a new Scope from the supplied parameters.
@@ -67,6 +68,7 @@ func NewClusterScope(params ClusterScopeParams) (*ClusterScope, error) {
 		Logger:                 params.Logger,
 		privateZone:            privateZone,
 		session:                session,
+		dnsRulesOwnerAccountId: params.DnsRulesOwnerAccountId,
 	}, nil
 }
 
@@ -79,8 +81,9 @@ type ClusterScope struct {
 	baseDomain             string
 	bastionIP              string
 	logr.Logger
-	privateZone bool
-	session     awsclient.ConfigProvider
+	privateZone            bool
+	session                awsclient.ConfigProvider
+	dnsRulesOwnerAccountId string
 }
 
 // ARN returns the AWS SDK assumed role. Used for creating workload cluster client.
@@ -140,4 +143,9 @@ func (s *ClusterScope) VPC() string {
 // AdditionalVPCToAssign returns the list of extra VPC ids which should be assigned to a private hosted zone
 func (s *ClusterScope) AdditionalVPCToAssign() []string {
 	return s.additionalVPCtoAssign
+}
+
+// DnsRulesCreatorAccount returns the account id to be used to filter dns rules associations
+func (s *ClusterScope) DnsRulesCreatorAccount() string {
+	return s.dnsRulesOwnerAccountId
 }

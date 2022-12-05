@@ -44,6 +44,7 @@ import (
 type AWSClusterReconciler struct {
 	client.Client
 
+	DnsRulesOwnerAccountId      string
 	AssociateResolverRules      bool
 	Log                         logr.Logger
 	ManagementClusterARN        string
@@ -129,6 +130,7 @@ func (r *AWSClusterReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 		BastionIP:              bastionIP,
 		Logger:                 log,
 		AWSCluster:             awsCluster,
+		DnsRulesOwnerAccountId: r.DnsRulesOwnerAccountId,
 	})
 	if err != nil {
 		return reconcile.Result{}, errors.Errorf("failed to create scope: %+v", err)
