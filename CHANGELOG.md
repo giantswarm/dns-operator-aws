@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add conditional associtation of resolver rules according to account id
+- Create bastion record with private IP for private clusters.
 
 ## [0.4.5] - 2022-11-25
 
