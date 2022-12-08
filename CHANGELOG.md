@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.6] - 2022-12-08
+
 ### Added
 
 - Add conditional associtation of resolver rules according to account id
@@ -85,7 +87,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2021-10-14
 
 
-[Unreleased]: https://github.com/giantswarm/dns-operator-aws/compare/v0.4.5...HEAD
+[Unreleased]: https://github.com/giantswarm/dns-operator-aws/compare/v0.4.6...HEAD
+[0.4.6]: https://github.com/giantswarm/dns-operator-aws/compare/v0.4.5...v0.4.6
 [0.4.5]: https://github.com/giantswarm/dns-operator-aws/compare/v0.4.4...v0.4.5
 [0.4.4]: https://github.com/giantswarm/dns-operator-aws/compare/v0.4.3...v0.4.4
 [0.4.3]: https://github.com/giantswarm/dns-operator-aws/compare/v0.4.2...v0.4.3
