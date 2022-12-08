@@ -20,6 +20,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/giantswarm/k8smetadata/pkg/annotation"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -102,6 +103,12 @@ func (r *AWSClusterReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 	// bastion might not exist depending on cluster configuration so there can be empty string here
 	var bastionIP string
 	{
+		addrType := "ExternalIP"
+		// if the cluster is private, use the InternalIP instead of ExernalIP
+		if awsCluster.Annotations[annotation.AWSVPCMode] == annotation.AWSVPCModePrivate {
+			addrType = "InternalIP"
+		}
+
 		bastionMachineList := &capi.MachineList{}
 		err = r.List(ctx, bastionMachineList, client.MatchingLabels{
 			"cluster.x-k8s.io/cluster-name": cluster.Name,
@@ -114,7 +121,7 @@ func (r *AWSClusterReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 		}
 		if len(bastionMachineList.Items) > 0 {
 			for _, addr := range bastionMachineList.Items[0].Status.Addresses {
-				if addr.Type == "ExternalIP" {
+				if addr.Type == capi.MachineAddressType(addrType) {
 					bastionIP = addr.Address
 					break
 				}
