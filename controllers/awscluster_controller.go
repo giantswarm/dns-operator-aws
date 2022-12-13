@@ -45,7 +45,7 @@ import (
 type AWSClusterReconciler struct {
 	client.Client
 
-	DnsRulesOwnerAccountId      string
+	ResolverRulesOwnerAccountId string
 	AssociateResolverRules      bool
 	Log                         logr.Logger
 	ManagementClusterARN        string
@@ -131,13 +131,13 @@ func (r *AWSClusterReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 
 	// Create the workload cluster scope.
 	clusterScope, err := scope.NewClusterScope(scope.ClusterScopeParams{
-		ARN:                    awsClusterRoleIdentity.Spec.RoleArn,
-		AssociateResolverRules: r.AssociateResolverRules,
-		BaseDomain:             r.WorkloadClusterBaseDomain,
-		BastionIP:              bastionIP,
-		Logger:                 log,
-		AWSCluster:             awsCluster,
-		DnsRulesOwnerAccountId: r.DnsRulesOwnerAccountId,
+		ARN:                         awsClusterRoleIdentity.Spec.RoleArn,
+		AssociateResolverRules:      r.AssociateResolverRules,
+		BaseDomain:                  r.WorkloadClusterBaseDomain,
+		BastionIP:                   bastionIP,
+		Logger:                      log,
+		AWSCluster:                  awsCluster,
+		ResolverRulesOwnerAccountId: r.ResolverRulesOwnerAccountId,
 	})
 	if err != nil {
 		return reconcile.Result{}, errors.Errorf("failed to create scope: %+v", err)

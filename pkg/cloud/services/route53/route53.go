@@ -80,8 +80,6 @@ func (s *Service) ReconcileRoute53() error {
 		}
 	}
 
-	// Associate resolver rules
-
 	err = s.associateResolverRules()
 	if err != nil {
 		return err
@@ -459,9 +457,10 @@ func (s *Service) associationsHasRule(associations []*route53resolver.ResolverRu
 	return false
 }
 
-// listResolverRules fetches all the resolver rules of type FORWARD.
+// listResolverRules fetches the resolver rules of type FORWARD. When an AWS account id is passed, only the rules
+// from that account will be listed.
 func (s *Service) listResolverRules() ([]*route53resolver.ResolverRule, error) {
-	var resolverRules []*route53resolver.ResolverRule
+	var resolverRules, filteredRules []*route53resolver.ResolverRule
 	var resolverRulesInput *route53resolver.ListResolverRulesInput
 	var resolverRulesOutput *route53resolver.ListResolverRulesOutput
 	var err error
@@ -491,6 +490,17 @@ func (s *Service) listResolverRules() ([]*route53resolver.ResolverRule, error) {
 			return nil, errors.Wrapf(err, "failed to list resolver rules")
 		}
 		resolverRules = append(resolverRules, resolverRulesOutput.ResolverRules...)
+	}
+
+	creatorID := s.scope.ResolverRulesCreatorAccount()
+	if creatorID != "" {
+		for _, rule := range resolverRules {
+			if *(rule.OwnerId) == creatorID {
+				filteredRules = append(filteredRules, rule)
+			}
+		}
+
+		return filteredRules, nil
 	}
 
 	return resolverRules, nil
