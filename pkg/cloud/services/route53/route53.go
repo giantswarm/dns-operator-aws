@@ -49,7 +49,7 @@ func (s *Service) DeleteRoute53() error {
 }
 
 func (s *Service) ReconcileRoute53() error {
-	s.scope.V(2).Info("Reconciling hosted DNS zone")
+	s.scope.Info("Reconciling hosted DNS zone")
 
 	// Describe or create.
 	_, err := s.describeWorkloadClusterZone()
@@ -67,7 +67,7 @@ func (s *Service) ReconcileRoute53() error {
 	if IsNotFound(err) {
 		// Fall through
 	} else if err != nil {
-		return err
+		return errors.Wrap(err, "failed creating workload cluster DNS records")
 	}
 
 	// delegation only make sense for public zones
@@ -90,6 +90,7 @@ func (s *Service) ReconcileRoute53() error {
 
 // associateResolverRules takes all the resolver rules and try to associate them with the workload cluster VPC.
 func (s *Service) associateResolverRules() error {
+	s.scope.Info("Let's associate resolver rules")
 	if s.scope.AssociateResolverRules() {
 		resolverRules, err := s.listResolverRules()
 		if err != nil {
@@ -98,9 +99,9 @@ func (s *Service) associateResolverRules() error {
 
 		associations, err := s.getResolverRuleAssociations(nil)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "failed to list AWS Resolver rules associations")
 		}
-		s.scope.V(2).Info("Got resolver rule associations", "associations", associations)
+		s.scope.Info("Got resolver rule associations", "associations", associations)
 
 		for _, rule := range resolverRules {
 			if !s.associationsHasRule(associations, rule) {
@@ -117,6 +118,8 @@ func (s *Service) associateResolverRules() error {
 			}
 		}
 	}
+
+	s.scope.Info("Skipping resolver rules associations")
 
 	return nil
 }
@@ -171,10 +174,14 @@ func (s *Service) changeWorkloadClusterRecords(action string) error {
 		return aws.ErrMissingEndpoint
 	}
 
+	s.scope.Info("BEFORE describing workload cluster hosted zone")
+
 	hostZoneID, err := s.describeWorkloadClusterZone()
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "failed describing workload cluster hosted zone")
 	}
+
+	s.scope.Info("After describing workload cluster hosted zone")
 
 	changes := []*route53.Change{
 		{
@@ -217,6 +224,8 @@ func (s *Service) changeWorkloadClusterRecords(action string) error {
 		return err
 	}
 
+	s.scope.Info("Now onto the bastion records")
+
 	// bastion is optional and the operation is transactions so all must succeed
 	if s.scope.BastionIP() != "" {
 		changes := []*route53.Change{
@@ -255,6 +264,8 @@ func (s *Service) changeWorkloadClusterRecords(action string) error {
 			return err
 		}
 	}
+
+	s.scope.Info("Finished 'changeWorkloadClusterRecords' without errors")
 
 	return nil
 }
@@ -325,11 +336,13 @@ func (s *Service) describeManagementClusterZone() (string, error) {
 }
 
 func (s *Service) changeManagementClusterDelegation(action string) error {
+	s.scope.Info("Describe management cluster hosted zone")
 	hostZoneID, err := s.describeManagementClusterZone()
 	if err != nil {
 		return err
 	}
 
+	s.scope.Info("List workload cluster NS records")
 	records, err := s.listWorkloadClusterNSRecords()
 	if err != nil {
 		return err
@@ -352,10 +365,14 @@ func (s *Service) changeManagementClusterDelegation(action string) error {
 		},
 	}
 
+	s.scope.Info("Change resource records set")
 	_, err = s.ManagementRoute53Client.ChangeResourceRecordSets(input)
 	if err != nil {
 		return err
 	}
+
+	s.scope.Info("Finish 'changeManagementClusterDelegation' without errors")
+
 	return nil
 }
 
