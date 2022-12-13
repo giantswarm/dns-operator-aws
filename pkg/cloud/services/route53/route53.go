@@ -123,39 +123,6 @@ func (s *Service) associateResolverRules() error {
 	return nil
 }
 
-// getResolverRules fetches all the resolver rules of type FORWARD.
-func (s *Service) getResolverRules() (*route53resolver.ListResolverRulesOutput, error) {
-	var resolverRulesInput *route53resolver.ListResolverRulesInput
-	var resolverRulesOutput *route53resolver.ListResolverRulesOutput
-	var err error
-
-	resolverRulesInput = &route53resolver.ListResolverRulesInput{
-		MaxResults: aws.Int64(100),
-		Filters: []*route53resolver.Filter{
-			{
-				Name:   aws.String("TYPE"),
-				Values: aws.StringSlice([]string{"FORWARD"}),
-			},
-		},
-	}
-	// Fetch first page of resolver rules.
-	resolverRulesOutput, err = s.Route53ResolverClient.ListResolverRules(resolverRulesInput)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to list resolver rules")
-	}
-
-	// If the response contains `NexToken` we need to send another request with the response token to get the next page.
-	for resolverRulesOutput.NextToken != nil && *resolverRulesOutput.NextToken != "" {
-		resolverRulesInput.NextToken = resolverRulesOutput.NextToken
-		resolverRulesOutput, err = s.Route53ResolverClient.ListResolverRules(resolverRulesInput)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to list resolver rules")
-		}
-	}
-
-	return resolverRulesOutput, nil
-}
-
 func (s *Service) describeWorkloadClusterZone() (string, error) {
 	// Search host zone by DNSName
 	input := &route53.ListHostedZonesByNameInput{
@@ -492,10 +459,15 @@ func (s *Service) associationsHasRule(associations []*route53resolver.ResolverRu
 	return false
 }
 
+// listResolverRules fetches all the resolver rules of type FORWARD.
 func (s *Service) listResolverRules() ([]*route53resolver.ResolverRule, error) {
-	filteredRules := make([]*route53resolver.ResolverRule, 0)
+	var resolverRules []*route53resolver.ResolverRule
+	var resolverRulesInput *route53resolver.ListResolverRulesInput
+	var resolverRulesOutput *route53resolver.ListResolverRulesOutput
+	var err error
 
-	i := &route53resolver.ListResolverRulesInput{
+	resolverRulesInput = &route53resolver.ListResolverRulesInput{
+		MaxResults: aws.Int64(100),
 		Filters: []*route53resolver.Filter{
 			{
 				Name:   aws.String("TYPE"),
@@ -503,21 +475,23 @@ func (s *Service) listResolverRules() ([]*route53resolver.ResolverRule, error) {
 			},
 		},
 	}
-
-	output, err := s.Route53ResolverClient.ListResolverRules(i)
+	// Fetch first page of resolver rules.
+	resolverRulesOutput, err = s.Route53ResolverClient.ListResolverRules(resolverRulesInput)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to list AWS Resolver rule")
+		return nil, errors.Wrapf(err, "failed to list resolver rules")
 	}
 
-	creatorID := s.scope.DnsRulesCreatorAccount()
-	if creatorID != "" {
-		for _, rule := range output.ResolverRules {
-			if *(rule.OwnerId) == creatorID {
-				filteredRules = append(filteredRules, rule)
-			}
+	resolverRules = append(resolverRules, resolverRulesOutput.ResolverRules...)
+
+	// If the response contains `NexToken` we need to send another request with the response token to get the next page.
+	for resolverRulesOutput.NextToken != nil && *resolverRulesOutput.NextToken != "" {
+		resolverRulesInput.NextToken = resolverRulesOutput.NextToken
+		resolverRulesOutput, err = s.Route53ResolverClient.ListResolverRules(resolverRulesInput)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to list resolver rules")
 		}
-		return filteredRules, nil
+		resolverRules = append(resolverRules, resolverRulesOutput.ResolverRules...)
 	}
 
-	return output.ResolverRules, err
+	return resolverRules, nil
 }
