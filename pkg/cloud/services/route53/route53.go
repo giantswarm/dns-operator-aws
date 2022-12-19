@@ -112,7 +112,8 @@ func (s *Service) associateResolverRules() error {
 				}
 				_, err = s.Route53ResolverClient.AssociateResolverRule(i)
 				if err != nil {
-					return errors.Wrapf(err, "failed to assign resolver rule %s to VPC %s", *rule.Name, s.scope.VPC())
+					s.scope.Error(err, "failed to assign resolver rule to VPC", "ruleName", *rule.Name, "vpc", s.scope.VPC())
+					continue
 				}
 			}
 		}
