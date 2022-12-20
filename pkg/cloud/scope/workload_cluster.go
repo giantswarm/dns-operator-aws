@@ -15,14 +15,14 @@ import (
 
 // ClusterScopeParams defines the input parameters used to create a new Scope.
 type ClusterScopeParams struct {
-	ARN                    string
-	AssociateResolverRules bool
-	AWSCluster             *infrav1.AWSCluster
-	BaseDomain             string
-	BastionIP              string
-	Logger                 logr.Logger
-	Session                awsclient.ConfigProvider
-	DnsRulesOwnerAccountId string
+	ARN                         string
+	AssociateResolverRules      bool
+	AWSCluster                  *infrav1.AWSCluster
+	BaseDomain                  string
+	BastionIP                   string
+	Logger                      logr.Logger
+	Session                     awsclient.ConfigProvider
+	ResolverRulesOwnerAccountId string
 }
 
 // NewClusterScope creates a new Scope from the supplied parameters.
@@ -59,16 +59,16 @@ func NewClusterScope(params ClusterScopeParams) (*ClusterScope, error) {
 	}
 
 	return &ClusterScope{
-		assumeRole:             params.ARN,
-		associateResolverRules: params.AssociateResolverRules,
-		additionalVPCtoAssign:  additionalVPCToAssign,
-		AWSCluster:             params.AWSCluster,
-		baseDomain:             params.BaseDomain,
-		bastionIP:              params.BastionIP,
-		Logger:                 params.Logger,
-		privateZone:            privateZone,
-		session:                session,
-		dnsRulesOwnerAccountId: params.DnsRulesOwnerAccountId,
+		assumeRole:                  params.ARN,
+		associateResolverRules:      params.AssociateResolverRules,
+		additionalVPCtoAssign:       additionalVPCToAssign,
+		AWSCluster:                  params.AWSCluster,
+		baseDomain:                  params.BaseDomain,
+		bastionIP:                   params.BastionIP,
+		Logger:                      params.Logger,
+		privateZone:                 privateZone,
+		session:                     session,
+		resolverRulesOwnerAccountId: params.ResolverRulesOwnerAccountId,
 	}, nil
 }
 
@@ -81,9 +81,9 @@ type ClusterScope struct {
 	baseDomain             string
 	bastionIP              string
 	logr.Logger
-	privateZone            bool
-	session                awsclient.ConfigProvider
-	dnsRulesOwnerAccountId string
+	privateZone                 bool
+	session                     awsclient.ConfigProvider
+	resolverRulesOwnerAccountId string
 }
 
 // ARN returns the AWS SDK assumed role. Used for creating workload cluster client.
@@ -145,7 +145,7 @@ func (s *ClusterScope) AdditionalVPCToAssign() []string {
 	return s.additionalVPCtoAssign
 }
 
-// DnsRulesCreatorAccount returns the account id to be used to filter dns rules associations
-func (s *ClusterScope) DnsRulesCreatorAccount() string {
-	return s.dnsRulesOwnerAccountId
+// ResolverRulesCreatorAccount returns the account id to be used to filter dns rules associations
+func (s *ClusterScope) ResolverRulesCreatorAccount() string {
+	return s.resolverRulesOwnerAccountId
 }

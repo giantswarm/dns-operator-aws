@@ -49,7 +49,7 @@ func (s *Service) DeleteRoute53() error {
 }
 
 func (s *Service) ReconcileRoute53() error {
-	s.scope.V(2).Info("Reconciling hosted DNS zone")
+	s.scope.Info("Reconciling hosted DNS zone")
 
 	// Describe or create.
 	_, err := s.describeWorkloadClusterZone()
@@ -67,7 +67,7 @@ func (s *Service) ReconcileRoute53() error {
 	if IsNotFound(err) {
 		// Fall through
 	} else if err != nil {
-		return err
+		return errors.Wrap(err, "failed creating workload cluster DNS records")
 	}
 
 	// delegation only make sense for public zones
@@ -80,18 +80,27 @@ func (s *Service) ReconcileRoute53() error {
 		}
 	}
 
-	// Associate resolver rules
+	err = s.associateResolverRules()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// associateResolverRules takes all the resolver rules and try to associate them with the workload cluster VPC.
+func (s *Service) associateResolverRules() error {
 	if s.scope.AssociateResolverRules() {
 		resolverRules, err := s.listResolverRules()
 		if err != nil {
-			return err
+			return errors.Wrap(err, "failed to list AWS Resolver rule")
 		}
 
 		associations, err := s.getResolverRuleAssociations(nil)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "failed to list AWS Resolver rules associations")
 		}
-		s.scope.V(2).Info("Got resolver rule assocations", "associations", associations)
+		s.scope.Info("Got resolver rule associations", "associations", associations)
 
 		for _, rule := range resolverRules {
 			if !s.associationsHasRule(associations, rule) {
@@ -103,11 +112,13 @@ func (s *Service) ReconcileRoute53() error {
 				}
 				_, err = s.Route53ResolverClient.AssociateResolverRule(i)
 				if err != nil {
-					return errors.Wrapf(err, "failed to assign resolver rule %s to VPC %s", *rule.Name, s.scope.VPC())
+					s.scope.Error(err, "failed to assign resolver rule to VPC", "ruleName", *rule.Name, "vpc", s.scope.VPC())
+					continue
 				}
 			}
 		}
 	}
+
 	return nil
 }
 
@@ -150,8 +161,11 @@ func (s *Service) listWorkloadClusterNSRecords() ([]*route53.ResourceRecord, err
 	return output.ResourceRecordSets[0].ResourceRecords, nil
 }
 
+// changeWorkloadClusterRecords creates the DNS records required by the workload cluster like
+// - a wildcard `CNAME` record pointing to the ingress record
+// - an `A` dns record 'api' pointing to the control plane LB
+// - optionally an `A` dns record 'bastion1' pointing to the bastion machine IP
 func (s *Service) changeWorkloadClusterRecords(action string) error {
-	s.scope.Info(s.scope.APIEndpoint())
 	if s.scope.APIEndpoint() == "" {
 		s.scope.Info("API endpoint is not ready yet.")
 		return aws.ErrMissingEndpoint
@@ -159,7 +173,7 @@ func (s *Service) changeWorkloadClusterRecords(action string) error {
 
 	hostZoneID, err := s.describeWorkloadClusterZone()
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "failed describing workload cluster hosted zone")
 	}
 
 	changes := []*route53.Change{
@@ -342,6 +356,7 @@ func (s *Service) changeManagementClusterDelegation(action string) error {
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -443,10 +458,16 @@ func (s *Service) associationsHasRule(associations []*route53resolver.ResolverRu
 	return false
 }
 
+// listResolverRules fetches the resolver rules of type FORWARD. When an AWS account id is passed, only the rules
+// from that account will be listed.
 func (s *Service) listResolverRules() ([]*route53resolver.ResolverRule, error) {
-	filteredRules := make([]*route53resolver.ResolverRule, 0)
+	var resolverRules, filteredRules []*route53resolver.ResolverRule
+	var resolverRulesInput *route53resolver.ListResolverRulesInput
+	var resolverRulesOutput *route53resolver.ListResolverRulesOutput
+	var err error
 
-	i := &route53resolver.ListResolverRulesInput{
+	resolverRulesInput = &route53resolver.ListResolverRulesInput{
+		MaxResults: aws.Int64(100),
 		Filters: []*route53resolver.Filter{
 			{
 				Name:   aws.String("TYPE"),
@@ -454,21 +475,34 @@ func (s *Service) listResolverRules() ([]*route53resolver.ResolverRule, error) {
 			},
 		},
 	}
-
-	output, err := s.Route53ResolverClient.ListResolverRules(i)
+	// Fetch first page of resolver rules.
+	resolverRulesOutput, err = s.Route53ResolverClient.ListResolverRules(resolverRulesInput)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to list AWS Resolver rule")
+		return nil, errors.Wrapf(err, "failed to list resolver rules")
 	}
 
-	creatorID := s.scope.DnsRulesCreatorAccount()
+	resolverRules = append(resolverRules, resolverRulesOutput.ResolverRules...)
+
+	// If the response contains `NexToken` we need to send another request with the response token to get the next page.
+	for resolverRulesOutput.NextToken != nil && *resolverRulesOutput.NextToken != "" {
+		resolverRulesInput.NextToken = resolverRulesOutput.NextToken
+		resolverRulesOutput, err = s.Route53ResolverClient.ListResolverRules(resolverRulesInput)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to list resolver rules")
+		}
+		resolverRules = append(resolverRules, resolverRulesOutput.ResolverRules...)
+	}
+
+	creatorID := s.scope.ResolverRulesCreatorAccount()
 	if creatorID != "" {
-		for _, rule := range output.ResolverRules {
+		for _, rule := range resolverRules {
 			if *(rule.OwnerId) == creatorID {
 				filteredRules = append(filteredRules, rule)
 			}
 		}
+
 		return filteredRules, nil
 	}
 
-	return output.ResolverRules, err
+	return resolverRules, nil
 }

@@ -44,8 +44,8 @@ type ClusterScoper interface {
 	VPC() string
 	// AdditionalVPCToAssign returns the list of extra VPC ids which should be assigned to a private hosted zone
 	AdditionalVPCToAssign() []string
-	//DnsRulesCreatorAccount returns the account id to be used to filter dns rules associations
-	DnsRulesCreatorAccount() string
+	// ResolverRulesCreatorAccount returns the account id to be used to filter dns rules associations
+	ResolverRulesCreatorAccount() string
 }
 
 // ManagementClusterScoper is the interface for a managemnt cluster scope

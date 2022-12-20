@@ -7,17 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix problem with pagination when listing resolver rules for association with VPC.
+
 ## [0.5.0] - 2022-12-20
 
 ### Changed
 
-- Renamed Helm value from `associateResolveRules` to `associateResolverRules`. 
+- Renamed Helm value from `associateResolveRules` to `associateResolverRules`.
 
 ## [0.4.6] - 2022-12-08
 
 ### Added
 
-- Add conditional associtation of resolver rules according to account id
+- Add conditional association of resolver rules according to account id.
 - Create bastion record with private IP for private clusters.
 
 ## [0.4.5] - 2022-11-25
