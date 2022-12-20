@@ -16,7 +16,7 @@ managementClusterName: ""
 managementClusterNamespace: ""
 
 
-associateResolveRules: false
+associateResolverRules: false
 
 pod:
   user:
