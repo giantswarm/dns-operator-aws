@@ -41,7 +41,7 @@ spec:
         - --management-cluster-namespace={{ .Values.managementClusterNamespace }}
         - --management-cluster-name={{ .Values.managementClusterName  }}
         - --workload-cluster-basedomain={{ .Values.workloadClusterBaseDomain }}
-        - --associate-resolver-rules={{ .Values.associateResolveRules }}
+        - --associate-resolver-rules={{ .Values.associateResolverRules }}
         resources:
           requests:
             cpu: 100m
