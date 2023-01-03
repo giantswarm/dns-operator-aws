@@ -295,6 +295,10 @@ func (s *Service) deleteAllWorkloadClusterRecords(action string) error {
 		HostedZoneId: aws.String(hostZoneID),
 		ChangeBatch:  &route53.ChangeBatch{Changes: changes},
 	}
+	if len(changes) == 0 {
+		// nothing to delete
+		return nil
+	}
 
 	_, err = s.Route53Client.ChangeResourceRecordSets(input)
 	if err != nil {
