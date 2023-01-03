@@ -30,4 +30,5 @@ replace (
 	github.com/pkg/sftp v1.10.1 => github.com/pkg/sftp v1.13.5
 	github.com/prometheus/client_golang v1.11.0 => github.com/prometheus/client_golang v1.12.2
 	go.mongodb.org/mongo-driver v1.1.2 => go.mongodb.org/mongo-driver v1.10.1
+	golang/sigs.k8s.io/aws-iam-authenticator v0.5.3 => golang/sigs.k8s.io/aws-iam-authenticator v0.6.2
 )
