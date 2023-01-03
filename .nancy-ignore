@@ -6,7 +6,7 @@ CVE-2022-29153 until=2023-12-31
 CVE-2021-20206 until=2023-12-31
 CVE-2022-2385 until=2023-12-31
 CVE-2022-32149 until=2023-12-31
-
+CVE-2021-41803 until=2023-12-31
 
 
 # It is an issue in the current latest v0.26.0 as well
