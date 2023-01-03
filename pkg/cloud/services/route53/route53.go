@@ -287,6 +287,7 @@ func (s *Service) deleteAllWorkloadClusterRecords(action string) error {
 				AliasTarget:     r.AliasTarget,
 			},
 		}
+		fmt.Printf("delete cluster record %#v\n", *c.ResourceRecordSet)
 		changes = append(changes, c)
 	}
 
@@ -297,7 +298,7 @@ func (s *Service) deleteAllWorkloadClusterRecords(action string) error {
 
 	_, err = s.Route53Client.ChangeResourceRecordSets(input)
 	if err != nil {
-		s.scope.Info("failed to delete DNS records", "error", err.Error())
+		s.scope.Info("failed to delete DNS records,", "error", err.Error())
 		return err
 	}
 
