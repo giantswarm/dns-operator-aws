@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Skip dns record deleting if there are no records avaiable for deletion.
+
 ## [0.5.1] - 2022-12-20
 
 ### Fixed

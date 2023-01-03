@@ -287,7 +287,6 @@ func (s *Service) deleteAllWorkloadClusterRecords(action string) error {
 				AliasTarget:     r.AliasTarget,
 			},
 		}
-		fmt.Printf("delete cluster record %#v\n", *c.ResourceRecordSet)
 		changes = append(changes, c)
 	}
 
