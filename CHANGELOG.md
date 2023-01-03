@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.2] - 2023-01-03
+
 ### Fixed
 
 - Skip dns record deleting if there are no records avaiable for deletion.
@@ -103,7 +105,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2021-10-14
 
 
-[Unreleased]: https://github.com/giantswarm/dns-operator-aws/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/giantswarm/dns-operator-aws/compare/v0.5.2...HEAD
+[0.5.2]: https://github.com/giantswarm/dns-operator-aws/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/giantswarm/dns-operator-aws/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/giantswarm/dns-operator-aws/compare/v0.4.6...v0.5.0
 [0.4.6]: https://github.com/giantswarm/dns-operator-aws/compare/v0.4.5...v0.4.6
