@@ -301,7 +301,7 @@ func (s *Service) deleteAllWorkloadClusterRecords(action string) error {
 
 	_, err = s.Route53Client.ChangeResourceRecordSets(input)
 	if err != nil {
-		s.scope.Info("failed to delete DNS records,", "error", err.Error())
+		s.scope.Info("failed to delete DNS records", "error", err.Error())
 		return err
 	}
 
