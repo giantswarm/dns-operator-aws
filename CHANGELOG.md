@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Skip resolver rule assocation to the vpc if one of target IPs belong to the respective vpc. 
+
 ## [0.5.2] - 2023-01-03
 
 ### Fixed
