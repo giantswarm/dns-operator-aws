@@ -5,14 +5,6 @@ import (
 )
 
 const (
-	ClusterNameLabel                        = "cluster.x-k8s.io/cluster-name"
-	CAPIWatchFilterLabel                    = "cluster.x-k8s.io/watch-filter"
-	CAPAReleaseComponent                    = "cluster-api-provider-aws"
-	DNSFinalizerName                        = "dns-operator-aws.finalizers.giantswarm.io"
-	DNSZoneReady         capi.ConditionType = "DNSZoneReady"
-
-	AnnotationDNSMode          = "aws.giantswarm.io/dns-mode"
-	AnnotationDNSAdditionalVPC = "aws.giantswarm.io/dns-assign-additional-vpc"
-
-	DNSModePrivate = "private"
+	DNSFinalizerName                    = "dns-operator-aws.finalizers.giantswarm.io"
+	DNSZoneReady     capi.ConditionType = "DNSZoneReady"
 )

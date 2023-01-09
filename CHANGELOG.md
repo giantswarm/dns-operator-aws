@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Use annotations from k8smetadat package.
+
+### Changed
+
+- Set go 1.19 in `go.mod`.
+
 ## [0.5.2] - 2023-01-03
 
 ### Fixed
