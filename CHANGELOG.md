@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Skip resolver rule assocation to the vpc if one of target IPs belong to the respective vpc. 
 
+### Added
+
+- Use annotations from k8smetadat package.
+
+### Changed
+
+- Set go 1.19 in `go.mod`.
+
 ## [0.5.2] - 2023-01-03
 
 ### Fixed
