@@ -2,6 +2,7 @@ package route53
 
 import (
 	"fmt"
+	"net"
 	"net/http"
 	"time"
 
@@ -104,16 +105,24 @@ func (s *Service) associateResolverRules() error {
 
 		for _, rule := range resolverRules {
 			if !s.associationsHasRule(associations, rule) {
-				s.scope.Info("No existing resolver rule association found, associating now", "rule", rule)
-				i := &route53resolver.AssociateResolverRuleInput{
-					Name:           rule.Name,
-					VPCId:          aws.String(s.scope.VPC()),
-					ResolverRuleId: rule.Id,
-				}
-				_, err = s.Route53ResolverClient.AssociateResolverRule(i)
+				belong, err := ruleTargetsBelongToSubnet(rule.TargetIps, s.scope.VPC())
 				if err != nil {
-					s.scope.Error(err, "failed to assign resolver rule to VPC", "ruleName", *rule.Name, "vpc", s.scope.VPC())
+					s.scope.Error(err, "failed to check if the resolver rule belongs to the VPC", "ruleName", *rule.Name, "vpc", s.scope.VPC())
 					continue
+
+				}
+				if !belong {
+					s.scope.Info("No existing resolver rule association found, associating now", "rule", rule)
+					i := &route53resolver.AssociateResolverRuleInput{
+						Name:           rule.Name,
+						VPCId:          aws.String(s.scope.VPC()),
+						ResolverRuleId: rule.Id,
+					}
+					_, err = s.Route53ResolverClient.AssociateResolverRule(i)
+					if err != nil {
+						s.scope.Error(err, "failed to assign resolver rule to VPC", "ruleName", *rule.Name, "vpc", s.scope.VPC())
+						continue
+					}
 				}
 			}
 		}
@@ -509,4 +518,25 @@ func (s *Service) listResolverRules() ([]*route53resolver.ResolverRule, error) {
 	}
 
 	return resolverRules, nil
+}
+
+// Checks if any of rule target IPs belongs to a CIDR range
+func ruleTargetsBelongToSubnet(targetIps []*route53resolver.TargetAddress, vpcCidr string) (bool, error) {
+	_, ipNetVpc, err := net.ParseCIDR(vpcCidr)
+	if err != nil {
+		return false, err
+	}
+
+	for _, targetIp := range targetIps {
+		ipIP, _, err := net.ParseCIDR(*targetIp.Ip)
+		if err != nil {
+			return false, err
+		}
+		if ipNetVpc.Contains(ipIP) {
+			return true, nil
+		}
+	}
+
+	return false, nil
+
 }
