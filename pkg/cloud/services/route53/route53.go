@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/aws/aws-sdk-go/service/route53resolver"
 	"github.com/pkg/errors"
@@ -103,14 +104,25 @@ func (s *Service) associateResolverRules() error {
 		}
 		s.scope.Info("Got resolver rule associations", "associations", associations)
 
+		vpcId := s.scope.VPC()
+		describeVpcsInput := &ec2.DescribeVpcsInput{
+			VpcIds: []*string{&vpcId},
+		}
+		describeVpcsOutput, err := s.Ec2Client.DescribeVpcs(describeVpcsInput)
+		if err != nil {
+			return errors.Wrap(err, "failed to describe vpc")
+		}
+		vpcCidr := *describeVpcsOutput.Vpcs[0].CidrBlock
+
 		for _, rule := range resolverRules {
 			if !s.associationsHasRule(associations, rule) {
-				belong, err := ruleTargetsBelongToSubnet(rule.TargetIps, s.scope.VPC())
+
+				belong, err := ruleTargetsBelongToSubnet(rule.TargetIps, vpcCidr)
 				if err != nil {
 					s.scope.Error(err, "failed to check if the resolver rule belongs to the VPC", "ruleName", *rule.Name, "vpc", s.scope.VPC())
 					continue
-
 				}
+
 				if !belong {
 					s.scope.Info("No existing resolver rule association found, associating now", "rule", rule)
 					i := &route53resolver.AssociateResolverRuleInput{
@@ -528,10 +540,7 @@ func ruleTargetsBelongToSubnet(targetIps []*route53resolver.TargetAddress, vpcCi
 	}
 
 	for _, targetIp := range targetIps {
-		ipIP, _, err := net.ParseCIDR(*targetIp.Ip)
-		if err != nil {
-			return false, err
-		}
+		ipIP := net.ParseIP(*targetIp.Ip)
 		if ipNetVpc.Contains(ipIP) {
 			return true, nil
 		}
