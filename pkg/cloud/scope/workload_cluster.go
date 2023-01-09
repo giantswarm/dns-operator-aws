@@ -4,13 +4,13 @@ import (
 	"strings"
 
 	awsclient "github.com/aws/aws-sdk-go/aws/client"
+	gsannotations "github.com/giantswarm/k8smetadata/pkg/annotation"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	"k8s.io/klog/klogr"
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/api/v1alpha3"
 
 	"github.com/giantswarm/dns-operator-aws/pkg/cloud"
-	"github.com/giantswarm/dns-operator-aws/pkg/key"
 )
 
 // ClusterScopeParams defines the input parameters used to create a new Scope.
@@ -43,11 +43,11 @@ func NewClusterScope(params ClusterScopeParams) (*ClusterScope, error) {
 
 	var additionalVPCToAssign []string
 	privateZone := false
-	annotation, ok := params.AWSCluster.Annotations[key.AnnotationDNSMode]
-	if ok && annotation == key.DNSModePrivate {
+	annotation, ok := params.AWSCluster.Annotations[gsannotations.AWSDNSMode]
+	if ok && annotation == gsannotations.DNSModePrivate {
 		privateZone = true
 
-		additionalVPCList, ok := params.AWSCluster.Annotations[key.AnnotationDNSAdditionalVPC]
+		additionalVPCList, ok := params.AWSCluster.Annotations[gsannotations.AWSDNSAdditionalVPC]
 		if ok {
 			additionalVPCToAssign = strings.Split(additionalVPCList, ",")
 		}

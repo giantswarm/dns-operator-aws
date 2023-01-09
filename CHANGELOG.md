@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Use annotations from k8smetadat package.
+
 ## [0.5.2] - 2023-01-03
 
 ### Fixed
