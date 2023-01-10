@@ -149,3 +149,8 @@ func (s *ClusterScope) AdditionalVPCToAssign() []string {
 func (s *ClusterScope) ResolverRulesCreatorAccount() string {
 	return s.resolverRulesOwnerAccountId
 }
+
+// VPCCidr returns cidr of cluster's VPC
+func (s *ClusterScope) VPCCidr() string {
+	return s.AWSCluster.Spec.NetworkSpec.VPC.CidrBlock
+}

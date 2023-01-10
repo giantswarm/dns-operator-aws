@@ -46,6 +46,8 @@ type ClusterScoper interface {
 	AdditionalVPCToAssign() []string
 	// ResolverRulesCreatorAccount returns the account id to be used to filter dns rules associations
 	ResolverRulesCreatorAccount() string
+	// VPCCidr returns cidr of cluster's VPC
+	VPCCidr() string
 }
 
 // ManagementClusterScoper is the interface for a managemnt cluster scope
