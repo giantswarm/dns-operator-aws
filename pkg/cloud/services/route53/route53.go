@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/aws/aws-sdk-go/service/route53resolver"
 	"github.com/pkg/errors"
@@ -104,16 +103,7 @@ func (s *Service) associateResolverRules() error {
 		}
 		s.scope.Info("Got resolver rule associations", "associations", associations)
 
-		vpcId := s.scope.VPC()
-		describeVpcsInput := &ec2.DescribeVpcsInput{
-			VpcIds: []*string{&vpcId},
-		}
-		describeVpcsOutput, err := s.Ec2Client.DescribeVpcs(describeVpcsInput)
-		if err != nil {
-			return errors.Wrap(err, "failed to describe vpc")
-		}
-		vpcCidr := *describeVpcsOutput.Vpcs[0].CidrBlock
-
+		vpcCidr := s.scope.VPCCidr()
 		for _, rule := range resolverRules {
 			if !s.associationsHasRule(associations, rule) {
 

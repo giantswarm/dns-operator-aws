@@ -1,7 +1,6 @@
 package route53
 
 import (
-	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/aws/aws-sdk-go/service/route53/route53iface"
 	"github.com/aws/aws-sdk-go/service/route53resolver/route53resolveriface"
 
@@ -15,7 +14,6 @@ type Service struct {
 	Route53Client           route53iface.Route53API
 	Route53ResolverClient   route53resolveriface.Route53ResolverAPI
 	ManagementRoute53Client route53iface.Route53API
-	Ec2Client               ec2iface.EC2API
 }
 
 // NewService returns a new service given the route53 api client.
@@ -26,6 +24,5 @@ func NewService(clusterScope scope.Route53Scope, managementScope scope.Managemen
 		Route53Client:           scope.NewRoute53Client(clusterScope, clusterScope.ARN(), clusterScope.InfraCluster()),
 		Route53ResolverClient:   scope.NewRoute53ResolverClient(clusterScope, clusterScope.ARN(), clusterScope.InfraCluster()),
 		ManagementRoute53Client: scope.NewRoute53Client(managementScope, managementScope.ARN(), managementScope.InfraCluster()),
-		Ec2Client:               scope.NewEc2Client(clusterScope, clusterScope.ARN(), clusterScope.InfraCluster()),
 	}
 }

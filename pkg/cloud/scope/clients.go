@@ -5,7 +5,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/request"
-	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/aws/aws-sdk-go/service/route53resolver"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -18,8 +17,7 @@ import (
 
 // AWSClients contains all the aws clients used by the scopes
 type AWSClients struct {
-	Route53   *route53.Route53
-	Ec2Client *ec2.EC2
+	Route53 *route53.Route53
 }
 
 // NewRoute53Client creates a new Route53 API client for a given session
@@ -58,14 +56,4 @@ func recordAWSPermissionsIssue(target runtime.Object) func(r *request.Request) {
 			}
 		}
 	}
-}
-
-// NewEc2Client creates a new EC2 API client for a given session
-func NewEc2Client(session cloud.Session, arn string, target runtime.Object) *ec2.EC2 {
-	Ec2Client := ec2.New(session.Session(), &aws.Config{Credentials: stscreds.NewCredentials(session.Session(), arn)})
-	Ec2Client.Handlers.Build.PushFrontNamed(getUserAgentHandler())
-	Ec2Client.Handlers.CompleteAttempt.PushFront(awsmetrics.CaptureRequestMetrics("dns-operator-aws"))
-	Ec2Client.Handlers.Complete.PushBack(recordAWSPermissionsIssue(target))
-
-	return Ec2Client
 }
