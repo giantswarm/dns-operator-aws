@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/aws/aws-sdk-go v1.43.28
 	github.com/giantswarm/k8smetadata v0.18.0
-	github.com/go-logr/logr v0.1.0
+	github.com/go-logr/logr v1.2.3
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.11.0
 	golang.org/x/text v0.3.7
