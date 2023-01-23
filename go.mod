@@ -5,14 +5,14 @@ go 1.19
 require (
 	github.com/aws/aws-sdk-go v1.43.28
 	github.com/giantswarm/k8smetadata v0.18.0
-	github.com/go-logr/logr v0.1.0
+	github.com/go-logr/logr v0.2.0
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.11.0
 	golang.org/x/text v0.3.7
-	k8s.io/api v0.17.17
-	k8s.io/apimachinery v0.17.17
-	k8s.io/client-go v0.17.17
-	k8s.io/component-base v0.17.17
+	k8s.io/api v0.20.15
+	k8s.io/apimachinery v0.20.15
+	k8s.io/client-go v0.20.15
+	k8s.io/component-base v0.20.15
 	k8s.io/klog v1.0.0
 	sigs.k8s.io/cluster-api v0.3.22
 	sigs.k8s.io/cluster-api-provider-aws v0.6.8
@@ -35,12 +35,12 @@ require (
 	github.com/google/go-cmp v0.5.7 // indirect
 	github.com/google/gofuzz v1.1.0 // indirect
 	github.com/google/uuid v1.1.2 // indirect
-	github.com/googleapis/gnostic v0.3.1 // indirect
+	github.com/googleapis/gnostic v0.4.1 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
+	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/onsi/gomega v1.14.0 // indirect
@@ -57,7 +57,7 @@ require (
 	golang.org/x/oauth2 v0.0.0-20210514164344-f6687ab2804c // indirect
 	golang.org/x/sys v0.0.0-20220728004956-3c1f35247d10 // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
-	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
+	golang.org/x/time v0.0.0-20200630173020-3af7569d3a1e // indirect
 	gomodules.xyz/jsonpatch/v2 v2.0.1 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.26.0 // indirect
@@ -65,9 +65,10 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	k8s.io/apiextensions-apiserver v0.17.17 // indirect
-	k8s.io/klog/v2 v2.1.0 // indirect
-	k8s.io/kube-openapi v0.0.0-20200410145947-bcb3869e6f29 // indirect
+	k8s.io/klog/v2 v2.4.0 // indirect
+	k8s.io/kube-openapi v0.0.0-20211110013926-83f114cd0513 // indirect
 	k8s.io/utils v0.0.0-20210709001253-0e1f9d693477 // indirect
+	sigs.k8s.io/structured-merge-diff/v4 v4.1.2 // indirect
 	sigs.k8s.io/yaml v1.2.0 // indirect
 )
 
