@@ -6,8 +6,7 @@ import (
 	awsclient "github.com/aws/aws-sdk-go/aws/client"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
-	"k8s.io/klog/klogr"
-	infrav1 "sigs.k8s.io/cluster-api-provider-aws/api/v1alpha3"
+	infrav1 "sigs.k8s.io/cluster-api-provider-aws/api/v1beta1"
 
 	"github.com/giantswarm/dns-operator-aws/pkg/cloud"
 )
@@ -33,9 +32,6 @@ func NewManagementClusterScope(params ManagementClusterScopeParams) (*Management
 	if params.BaseDomain == "" {
 		return nil, errors.New("failed to generate new scope from emtpy string BaseDomain")
 	}
-	if params.Logger == nil {
-		params.Logger = klogr.New()
-	}
 
 	region := params.AWSCluster.Spec.Region
 	if env := os.Getenv("MANAGEMENT_CLUSTER_REGION"); env != "" {
@@ -50,7 +46,7 @@ func NewManagementClusterScope(params ManagementClusterScopeParams) (*Management
 		assumeRole: params.ARN,
 		AWSCluster: params.AWSCluster,
 		baseDomain: params.BaseDomain,
-		Logger:     params.Logger,
+		logger:     params.Logger,
 		session:    session,
 	}, nil
 }
@@ -60,8 +56,12 @@ type ManagementClusterScope struct {
 	assumeRole string
 	AWSCluster *infrav1.AWSCluster
 	baseDomain string
-	logr.Logger
-	session awsclient.ConfigProvider
+	logger     logr.Logger
+	session    awsclient.ConfigProvider
+}
+
+func (s *ManagementClusterScope) Logger() logr.Logger {
+	return s.logger
 }
 
 // ARN returns the AWS SDK assumed role. Used for creating workload cluster client.

@@ -13,7 +13,7 @@ import (
 )
 
 func (s *Service) DeleteRoute53() error {
-	s.scope.V(2).Info("Deleting hosted DNS zone")
+	s.scope.Logger().V(2).Info("Deleting hosted DNS zone")
 	hostedZoneID, err := s.describeWorkloadClusterZone()
 	if IsNotFound(err) {
 		return nil
@@ -44,13 +44,13 @@ func (s *Service) DeleteRoute53() error {
 	} else if err != nil {
 		return err
 	}
-	s.scope.V(2).Info(fmt.Sprintf("Deleting hosted zone completed successfully for cluster %s", s.scope.Name()))
+	s.scope.Logger().V(2).Info(fmt.Sprintf("Deleting hosted zone completed successfully for cluster %s", s.scope.Name()))
 
 	return nil
 }
 
 func (s *Service) ReconcileRoute53() error {
-	s.scope.Info("Reconciling hosted DNS zone")
+	s.scope.Logger().Info("Reconciling hosted DNS zone")
 
 	// Describe or create.
 	_, err := s.describeWorkloadClusterZone()
@@ -59,7 +59,7 @@ func (s *Service) ReconcileRoute53() error {
 		if err != nil {
 			return err
 		}
-		s.scope.Info(fmt.Sprintf("Created new hosted zone for cluster %s", s.scope.Name()))
+		s.scope.Logger().Info(fmt.Sprintf("Created new hosted zone for cluster %s", s.scope.Name()))
 	} else if err != nil {
 		return err
 	}
@@ -101,7 +101,7 @@ func (s *Service) associateResolverRules() error {
 		if err != nil {
 			return errors.Wrap(err, "failed to list AWS Resolver rules associations")
 		}
-		s.scope.Info("Got resolver rule associations", "associations", associations)
+		s.scope.Logger().Info("Got resolver rule associations", "associations", associations)
 
 		vpcCidr := s.scope.VPCCidr()
 		for _, rule := range resolverRules {
@@ -109,12 +109,12 @@ func (s *Service) associateResolverRules() error {
 
 				belong, err := ruleTargetsBelongToSubnet(rule.TargetIps, vpcCidr)
 				if err != nil {
-					s.scope.Error(err, "failed to check if the resolver rule belongs to the VPC", "ruleName", *rule.Name, "vpc", s.scope.VPC())
+					s.scope.Logger().Error(err, "failed to check if the resolver rule belongs to the VPC", "ruleName", *rule.Name, "vpc", s.scope.VPC())
 					continue
 				}
 
 				if !belong {
-					s.scope.Info("No existing resolver rule association found, associating now", "rule", rule)
+					s.scope.Logger().Info("No existing resolver rule association found, associating now", "rule", rule)
 					i := &route53resolver.AssociateResolverRuleInput{
 						Name:           rule.Name,
 						VPCId:          aws.String(s.scope.VPC()),
@@ -122,7 +122,7 @@ func (s *Service) associateResolverRules() error {
 					}
 					_, err = s.Route53ResolverClient.AssociateResolverRule(i)
 					if err != nil {
-						s.scope.Error(err, "failed to assign resolver rule to VPC", "ruleName", *rule.Name, "vpc", s.scope.VPC())
+						s.scope.Logger().Error(err, "failed to assign resolver rule to VPC", "ruleName", *rule.Name, "vpc", s.scope.VPC())
 						continue
 					}
 				}
@@ -178,7 +178,7 @@ func (s *Service) listWorkloadClusterNSRecords() ([]*route53.ResourceRecord, err
 // - optionally an `A` dns record 'bastion1' pointing to the bastion machine IP
 func (s *Service) changeWorkloadClusterRecords(action string) error {
 	if s.scope.APIEndpoint() == "" {
-		s.scope.Info("API endpoint is not ready yet.")
+		s.scope.Logger().Info("API endpoint is not ready yet.")
 		return aws.ErrMissingEndpoint
 	}
 
@@ -224,7 +224,7 @@ func (s *Service) changeWorkloadClusterRecords(action string) error {
 	if IsAlreadyExists(err) {
 		// if record already exists, continue with bastion
 	} else if err != nil {
-		s.scope.Info("failed to change base DNS records", "error", err.Error())
+		s.scope.Logger().Info("failed to change base DNS records", "error", err.Error())
 		return err
 	}
 
@@ -257,12 +257,12 @@ func (s *Service) changeWorkloadClusterRecords(action string) error {
 			input.ChangeBatch.Changes[0].Action = aws.String("UPSERT")
 			_, err := s.Route53Client.ChangeResourceRecordSets(input)
 			if err != nil {
-				s.scope.Info("failed to update bastion DNS records", "error", err.Error())
+				s.scope.Logger().Info("failed to update bastion DNS records", "error", err.Error())
 				return err
 			}
 
 		} else if err != nil {
-			s.scope.Info("failed to change bastion DNS records", "error", err.Error())
+			s.scope.Logger().Info("failed to change bastion DNS records", "error", err.Error())
 			return err
 		}
 	}
@@ -279,7 +279,7 @@ func (s *Service) deleteAllWorkloadClusterRecords(action string) error {
 	o, err := s.Route53Client.ListResourceRecordSets(i)
 
 	if err != nil {
-		s.scope.Error(err, "failed to list DNS records", "error", err.Error())
+		s.scope.Logger().Error(err, "failed to list DNS records", "error", err.Error())
 		return err
 	}
 	var changes []*route53.Change
@@ -312,7 +312,7 @@ func (s *Service) deleteAllWorkloadClusterRecords(action string) error {
 
 	_, err = s.Route53Client.ChangeResourceRecordSets(input)
 	if err != nil {
-		s.scope.Info("failed to delete DNS records", "error", err.Error())
+		s.scope.Logger().Info("failed to delete DNS records", "error", err.Error())
 		return err
 	}
 
@@ -325,7 +325,7 @@ func (s *Service) describeManagementClusterZone() (string, error) {
 	}
 	out, err := s.ManagementRoute53Client.ListHostedZonesByName(input)
 	if err != nil {
-		s.scope.Info(err.Error())
+		s.scope.Logger().Info(err.Error())
 		return "", err
 	}
 	if len(out.HostedZones) == 0 {
@@ -377,7 +377,7 @@ func (s *Service) changeManagementClusterDelegation(action string) error {
 
 func (s *Service) createWorkloadClusterZone() error {
 	if s.scope.PrivateZone() && s.scope.VPC() == "" {
-		s.scope.Info("VPC ID is not ready yet for Private Hosted Zone")
+		s.scope.Logger().Info("VPC ID is not ready yet for Private Hosted Zone")
 		return aws.ErrMissingEndpoint
 
 	}
@@ -434,7 +434,7 @@ func (s *Service) deleteWorkloadClusterZone(hostedZoneID string) error {
 }
 
 func (s *Service) getResolverRuleAssociations(nextToken *string) ([]*route53resolver.ResolverRuleAssociation, error) {
-	s.scope.Info("Fetching resolver rule associations", "nextToken", nextToken)
+	s.scope.Logger().Info("Fetching resolver rule associations", "nextToken", nextToken)
 	ruleAssociations := []*route53resolver.ResolverRuleAssociation{}
 
 	associations, err := s.Route53ResolverClient.ListResolverRuleAssociations(&route53resolver.ListResolverRuleAssociationsInput{

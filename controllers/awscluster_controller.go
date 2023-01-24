@@ -25,7 +25,7 @@ import (
 	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
-	capi "sigs.k8s.io/cluster-api/api/v1alpha3"
+	capi "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/cluster-api/util/conditions"
@@ -38,7 +38,7 @@ import (
 	"github.com/giantswarm/dns-operator-aws/pkg/cloud/services/route53"
 	"github.com/giantswarm/dns-operator-aws/pkg/key"
 
-	capa "sigs.k8s.io/cluster-api-provider-aws/api/v1alpha3"
+	capa "sigs.k8s.io/cluster-api-provider-aws/api/v1beta1"
 )
 
 // AWSClusterReconciler reconciles a AWSCluster object
@@ -59,8 +59,7 @@ type AWSClusterReconciler struct {
 // +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=awsclusters,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=awsclusters/status,verbs=get;update;patch
 
-func (r *AWSClusterReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	ctx := context.Background()
+func (r *AWSClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.Log.WithValues("awscluster", req.NamespacedName)
 
 	awsCluster := &capa.AWSCluster{}
@@ -180,20 +179,20 @@ func (r *AWSClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 func (r *AWSClusterReconciler) reconcileNormal(ctx context.Context, clusterScope *scope.ClusterScope, managementScope *scope.ManagementClusterScope) (reconcile.Result, error) {
-	clusterScope.Info("Reconciling AWSCluster normal")
+	clusterScope.Logger().Info("Reconciling AWSCluster normal")
 
 	awsCluster := clusterScope.AWSCluster
 	// If the AWSCluster doesn't have the finalizer, add it.
 	controllerutil.AddFinalizer(awsCluster, key.DNSFinalizerName)
 	// Register the finalizer immediately to avoid orphaning AWS resources on delete
 	if err := r.Update(ctx, awsCluster); err != nil {
-		clusterScope.Error(err, "failed to add finalizer")
+		clusterScope.Logger().Error(err, "failed to add finalizer")
 		return reconcile.Result{}, err
 	}
 
 	route53Service := route53.NewService(clusterScope, managementScope)
 	if err := route53Service.ReconcileRoute53(); err != nil {
-		clusterScope.Error(err, "error creating route53")
+		clusterScope.Logger().Error(err, "error creating route53")
 		return reconcile.Result{}, err
 	}
 
@@ -210,16 +209,16 @@ func (r *AWSClusterReconciler) reconcileNormal(ctx context.Context, clusterScope
 }
 
 func (r *AWSClusterReconciler) reconcileDelete(ctx context.Context, clusterScope *scope.ClusterScope, managementScope *scope.ManagementClusterScope) (reconcile.Result, error) {
-	clusterScope.Info("Reconciling AWSCluster delete")
+	clusterScope.Logger().Info("Reconciling AWSCluster delete")
 
 	route53Service := route53.NewService(clusterScope, managementScope)
 
 	if err := route53Service.DeleteRoute53(); err != nil {
-		clusterScope.Error(err, "error deleting route53")
+		clusterScope.Logger().Error(err, "error deleting route53")
 		return reconcile.Result{}, err
 	}
 
-	clusterScope.Info("removing finalizer")
+	clusterScope.Logger().Info("removing finalizer")
 	awsCluster := &capa.AWSCluster{}
 	err := r.Get(ctx, client.ObjectKey{Name: clusterScope.AWSCluster.Name, Namespace: clusterScope.AWSCluster.Namespace}, awsCluster)
 	if err != nil {
@@ -233,13 +232,13 @@ func (r *AWSClusterReconciler) reconcileDelete(ctx context.Context, clusterScope
 	controllerutil.RemoveFinalizer(awsCluster, key.DNSFinalizerName)
 	// Finally remove the finalizer
 	if err := r.Update(ctx, awsCluster); err != nil {
-		clusterScope.Info("failed to remove finalizer", "reason", err.Error())
+		clusterScope.Logger().Info("failed to remove finalizer", "reason", err.Error())
 		return reconcile.Result{
 			Requeue:      true,
 			RequeueAfter: time.Minute,
 		}, nil
 	}
-	clusterScope.Info("removed finalizer, removing from queue")
+	clusterScope.Logger().Info("removed finalizer, removing from queue")
 
 	return ctrl.Result{
 		Requeue: false,
