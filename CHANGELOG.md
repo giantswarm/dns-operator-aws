@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Skip resolver rule assocation to the vpc if one of target IPs belong to the respective vpc. 
+- Skip resolver rule assocation to the vpc if one of target IPs belong to the respective vpc.
 
 ### Added
 
@@ -17,7 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Set go 1.19 in `go.mod`.
+- Upgrade to Go 1.19
+- Upgrade to CAPA v1beta1 types
+- Upgrade all dependencies
 
 ## [0.5.2] - 2023-01-03
 

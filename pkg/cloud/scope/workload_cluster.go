@@ -7,8 +7,7 @@ import (
 	gsannotations "github.com/giantswarm/k8smetadata/pkg/annotation"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
-	"k8s.io/klog/klogr"
-	infrav1 "sigs.k8s.io/cluster-api-provider-aws/api/v1alpha3"
+	infrav1 "sigs.k8s.io/cluster-api-provider-aws/api/v1beta1"
 
 	"github.com/giantswarm/dns-operator-aws/pkg/cloud"
 )
@@ -37,9 +36,6 @@ func NewClusterScope(params ClusterScopeParams) (*ClusterScope, error) {
 	if params.BaseDomain == "" {
 		return nil, errors.New("failed to generate new scope from emtpy string BaseDomain")
 	}
-	if params.Logger == nil {
-		params.Logger = klogr.New()
-	}
 
 	var additionalVPCToAssign []string
 	privateZone := false
@@ -65,7 +61,7 @@ func NewClusterScope(params ClusterScopeParams) (*ClusterScope, error) {
 		AWSCluster:                  params.AWSCluster,
 		baseDomain:                  params.BaseDomain,
 		bastionIP:                   params.BastionIP,
-		Logger:                      params.Logger,
+		logger:                      params.Logger,
 		privateZone:                 privateZone,
 		session:                     session,
 		resolverRulesOwnerAccountId: params.ResolverRulesOwnerAccountId,
@@ -74,16 +70,20 @@ func NewClusterScope(params ClusterScopeParams) (*ClusterScope, error) {
 
 // ClusterScope defines the basic context for an actuator to operate upon.
 type ClusterScope struct {
-	assumeRole             string
-	associateResolverRules bool
-	additionalVPCtoAssign  []string
-	AWSCluster             *infrav1.AWSCluster
-	baseDomain             string
-	bastionIP              string
-	logr.Logger
+	assumeRole                  string
+	associateResolverRules      bool
+	additionalVPCtoAssign       []string
+	AWSCluster                  *infrav1.AWSCluster
+	baseDomain                  string
+	bastionIP                   string
+	logger                      logr.Logger
 	privateZone                 bool
 	session                     awsclient.ConfigProvider
 	resolverRulesOwnerAccountId string
+}
+
+func (s *ClusterScope) Logger() logr.Logger {
+	return s.logger
 }
 
 // ARN returns the AWS SDK assumed role. Used for creating workload cluster client.
