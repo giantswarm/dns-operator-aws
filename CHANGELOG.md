@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.3] - 2023-01-25
+
 ### Fixed
 
 - Skip resolver rule assocation to the VPC if one of target IPs belong to the respective VPC.
@@ -119,7 +121,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2021-10-14
 
 
-[Unreleased]: https://github.com/giantswarm/dns-operator-aws/compare/v0.5.2...HEAD
+[Unreleased]: https://github.com/giantswarm/dns-operator-aws/compare/v0.5.3...HEAD
+[0.5.3]: https://github.com/giantswarm/dns-operator-aws/compare/v0.5.2...v0.5.3
 [0.5.2]: https://github.com/giantswarm/dns-operator-aws/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/giantswarm/dns-operator-aws/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/giantswarm/dns-operator-aws/compare/v0.4.6...v0.5.0
