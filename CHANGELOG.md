@@ -7,11 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Wire parameter that allows to filter which resolver rules to associate.
+
 ## [0.5.3] - 2023-01-25
 
 ### Fixed
 
-- Skip resolver rule assocation to the VPC if one of target IPs belong to the respective VPC.
+- Skip resolver rule association to the VPC if one of target IPs belong to the respective VPC.
 
 ### Added
 
