@@ -9,11 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Skip resolver rule assocation to the vpc if one of target IPs belong to the respective vpc.
+- Skip resolver rule assocation to the VPC if one of target IPs belong to the respective VPC.
 
 ### Added
 
-- Use annotations from k8smetadat package.
+- Use annotations from k8smetadata package.
 
 ### Changed
 
