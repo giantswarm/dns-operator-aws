@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.4] - 2023-01-30
+
 ### Fixed
 
 - Wire parameter that allows to filter which resolver rules to associate.
@@ -125,7 +127,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2021-10-14
 
 
-[Unreleased]: https://github.com/giantswarm/dns-operator-aws/compare/v0.5.3...HEAD
+[Unreleased]: https://github.com/giantswarm/dns-operator-aws/compare/v0.5.4...HEAD
+[0.5.4]: https://github.com/giantswarm/dns-operator-aws/compare/v0.5.3...v0.5.4
 [0.5.3]: https://github.com/giantswarm/dns-operator-aws/compare/v0.5.2...v0.5.3
 [0.5.2]: https://github.com/giantswarm/dns-operator-aws/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/giantswarm/dns-operator-aws/compare/v0.5.0...v0.5.1
