@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Use patch instead of update method to avoid ping-pong of errors `the object has been modified` if other controllers reconciled in the meantime
+
 ## [0.5.4] - 2023-01-30
 
 ### Fixed
