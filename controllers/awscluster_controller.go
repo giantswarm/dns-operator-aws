@@ -29,6 +29,7 @@ import (
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/cluster-api/util/conditions"
+	"sigs.k8s.io/cluster-api/util/patch"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -182,12 +183,19 @@ func (r *AWSClusterReconciler) reconcileNormal(ctx context.Context, clusterScope
 	clusterScope.Logger().Info("Reconciling AWSCluster normal")
 
 	awsCluster := clusterScope.AWSCluster
-	// If the AWSCluster doesn't have the finalizer, add it.
-	controllerutil.AddFinalizer(awsCluster, key.DNSFinalizerName)
-	// Register the finalizer immediately to avoid orphaning AWS resources on delete
-	if err := r.Update(ctx, awsCluster); err != nil {
-		clusterScope.Logger().Error(err, "failed to add finalizer")
-		return reconcile.Result{}, err
+
+	if !controllerutil.ContainsFinalizer(awsCluster, key.DNSFinalizerName) {
+		patchHelper, err := patch.NewHelper(awsCluster, r.Client)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+		controllerutil.AddFinalizer(awsCluster, key.DNSFinalizerName)
+		err = patchHelper.Patch(ctx, awsCluster)
+		if err != nil {
+			clusterScope.Logger().Error(err, "failed to add finalizer on AWSCluster")
+			return ctrl.Result{}, err
+		}
+		clusterScope.Logger().Info("successfully added finalizer to AWSCluster")
 	}
 
 	route53Service := route53.NewService(clusterScope, managementScope)
@@ -197,9 +205,14 @@ func (r *AWSClusterReconciler) reconcileNormal(ctx context.Context, clusterScope
 	}
 
 	conditions.MarkTrue(awsCluster, key.DNSZoneReady)
-	err := r.Client.Status().Update(ctx, awsCluster)
+	patchHelper, err := patch.NewHelper(awsCluster, r.Client)
 	if err != nil {
-		return reconcile.Result{}, err
+		return ctrl.Result{}, err
+	}
+	err = patchHelper.Patch(ctx, awsCluster)
+	if err != nil {
+		clusterScope.Logger().Error(err, "failed to set DNSZoneReady condition")
+		return ctrl.Result{}, err
 	}
 
 	return ctrl.Result{
@@ -228,19 +241,21 @@ func (r *AWSClusterReconciler) reconcileDelete(ctx context.Context, clusterScope
 
 		return reconcile.Result{}, err
 	}
-	// AWSCluster is deleted so remove the finalizer.
-	controllerutil.RemoveFinalizer(awsCluster, key.DNSFinalizerName)
-	// Finally remove the finalizer
-	if err := r.Update(ctx, awsCluster); err != nil {
-		clusterScope.Logger().Info("failed to remove finalizer", "reason", err.Error())
-		return reconcile.Result{
-			Requeue:      true,
-			RequeueAfter: time.Minute,
-		}, nil
-	}
-	clusterScope.Logger().Info("removed finalizer, removing from queue")
 
-	return ctrl.Result{
-		Requeue: false,
-	}, nil
+	// AWSCluster is deleted so remove the finalizer.
+	if controllerutil.ContainsFinalizer(awsCluster, key.DNSFinalizerName) {
+		patchHelper, err := patch.NewHelper(awsCluster, r.Client)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+		controllerutil.RemoveFinalizer(awsCluster, key.DNSFinalizerName)
+		err = patchHelper.Patch(ctx, awsCluster)
+		if err != nil {
+			clusterScope.Logger().Error(err, "failed to remove finalizer from AWSCluster")
+			return ctrl.Result{}, err
+		}
+		clusterScope.Logger().Info("successfully removed finalizer from AWSCluster")
+	}
+
+	return ctrl.Result{}, nil
 }
