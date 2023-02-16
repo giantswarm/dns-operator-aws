@@ -45,11 +45,11 @@ spec:
         - --management-cluster-name={{ .Values.managementClusterName  }}
         - --workload-cluster-basedomain={{ .Values.workloadClusterBaseDomain }}
         - --associate-resolver-rules={{ .Values.associateResolverRules }}
+        - --account-id={{ .Values.resolverRulesOwnerAccount }}
         securityContext:
           {{- with .Values.securityContext }}
             {{- . | toYaml | nindent 10 }}
           {{- end }}
-        - --account-id={{ .Values.resolverRulesOwnerAccount }}
         resources:
           requests:
             cpu: 100m
