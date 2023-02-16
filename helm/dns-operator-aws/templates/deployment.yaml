@@ -49,6 +49,7 @@ spec:
           {{- with .Values.securityContext }}
             {{- . | toYaml | nindent 10 }}
           {{- end }}
+        - --account-id={{ .Values.resolverRulesOwnerAccount }}
         resources:
           requests:
             cpu: 100m

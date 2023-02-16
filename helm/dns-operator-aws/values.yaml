@@ -18,6 +18,9 @@ managementClusterNamespace: ""
 
 associateResolverRules: false
 
+# Associate only resolver rules owned by this AWS Account
+resolverRulesOwnerAccount: ""
+
 pod:
   user:
     id: 1000

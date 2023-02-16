@@ -76,6 +76,9 @@
                 }
             }
         },
+        "resolverRulesOwnerAccount": {
+            "type": "string"
+        },
         "verticalPodAutoscaler": {
             "type": "object",
             "properties": {

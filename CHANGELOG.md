@@ -16,9 +16,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Use annotations from k8smetadat package.
 - Use of default/runtime seccomp profile.
 
+## [0.5.5] - 2023-02-08
+
 ### Changed
 
-- Set go 1.19 in `go.mod`.
+- Use patch instead of update method to avoid ping-pong of errors `the object has been modified` if other controllers reconciled in the meantime
+
+## [0.5.4] - 2023-01-30
+
+### Fixed
+
+- Wire parameter that allows to filter which resolver rules to associate.
+
+## [0.5.3] - 2023-01-25
+
+### Fixed
+
+- Skip resolver rule association to the VPC if one of target IPs belong to the respective VPC.
+
+### Added
+
+- Use annotations from k8smetadata package.
+
+### Changed
+
+- Upgrade to Go 1.19
+- Upgrade to CAPA v1beta1 types
+- Upgrade all dependencies
 
 ## [0.5.2] - 2023-01-03
 
@@ -118,7 +142,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2021-10-14
 
 
-[Unreleased]: https://github.com/giantswarm/dns-operator-aws/compare/v0.5.2...HEAD
+[Unreleased]: https://github.com/giantswarm/dns-operator-aws/compare/v0.5.5...HEAD
+[0.5.5]: https://github.com/giantswarm/dns-operator-aws/compare/v0.5.4...v0.5.5
+[0.5.4]: https://github.com/giantswarm/dns-operator-aws/compare/v0.5.3...v0.5.4
+[0.5.3]: https://github.com/giantswarm/dns-operator-aws/compare/v0.5.2...v0.5.3
 [0.5.2]: https://github.com/giantswarm/dns-operator-aws/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/giantswarm/dns-operator-aws/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/giantswarm/dns-operator-aws/compare/v0.4.6...v0.5.0

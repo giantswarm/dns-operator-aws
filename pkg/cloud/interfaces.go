@@ -18,8 +18,10 @@ type ClusterObject interface {
 
 // ClusterScoper is the interface for a workload cluster scope
 type ClusterScoper interface {
-	logr.Logger
 	Session
+
+	// Logger retrieves the logger
+	Logger() logr.Logger
 
 	// ARN returns the workload cluster assumed role to operate.
 	ARN() string
@@ -52,8 +54,10 @@ type ClusterScoper interface {
 
 // ManagementClusterScoper is the interface for a managemnt cluster scope
 type ManagementClusterScoper interface {
-	logr.Logger
 	Session
+
+	// Logger retrieves the logger
+	Logger() logr.Logger
 
 	// ARN returns the management cluster assumed role to operate.
 	ARN() string

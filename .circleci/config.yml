@@ -43,7 +43,7 @@ workflows:
     # an image gets pushed to the Aliyun registry.
     - architect/push-to-docker:
         name: push-to-aliyun
-        image: "registry-intl.cn-shanghai.aliyuncs.com/giantswarm/dns-operator-aws"
+        image: "giantswarm-registry.cn-shanghai.cr.aliyuncs.com/giantswarm/dns-operator-aws"
         username_envar: "ALIYUN_USERNAME"
         password_envar: "ALIYUN_PASSWORD"
         requires:
@@ -69,7 +69,7 @@ workflows:
             ignore: /^v.*/
     - architect/push-to-docker:
         name: push-to-aliyun-pr
-        image: "registry-intl.cn-shanghai.aliyuncs.com/giantswarm/dns-operator-aws"
+        image: "giantswarm-registry.cn-shanghai.cr.aliyuncs.com/giantswarm/dns-operator-aws"
         username_envar: "ALIYUN_USERNAME"
         password_envar: "ALIYUN_PASSWORD"
         requires:
