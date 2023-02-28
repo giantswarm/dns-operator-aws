@@ -439,7 +439,7 @@ func (s *Service) createWorkloadClusterZone() error {
 	}
 	_, err = s.Route53Client.ChangeTagsForResource(tagsInput)
 	if err != nil {
-		return errors.Wrapf(err, "failed to add tags to hosted zone for cluster for cluster %s", s.scope.Name())
+		return errors.Wrapf(err, "failed to add tags to hosted zone for cluster %s", s.scope.Name())
 	}
 
 	return nil
