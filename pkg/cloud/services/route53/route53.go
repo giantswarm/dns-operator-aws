@@ -435,7 +435,8 @@ func (s *Service) createWorkloadClusterZone() error {
 				Value: aws.String("common"),
 			},
 		},
-		ResourceId: o.HostedZone.Id,
+		ResourceId:   o.HostedZone.Id,
+		ResourceType: aws.String("hostedzone"),
 	}
 	_, err = s.Route53Client.ChangeTagsForResource(tagsInput)
 	if err != nil {
