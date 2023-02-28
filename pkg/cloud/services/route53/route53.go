@@ -414,9 +414,32 @@ func (s *Service) createWorkloadClusterZone() error {
 			}
 			_, err := s.Route53Client.AssociateVPCWithHostedZone(i)
 			if err != nil {
-				return errors.Wrapf(err, "failed to associate private hosted zone with vpc %s, for WC cluster %s", vpc, s.scope.Name())
+				return errors.Wrapf(err, "failed to associate private hosted zone with vpc %s, for cluster %s", vpc, s.scope.Name())
 			}
 		}
+	}
+
+	// tag hosted zone
+	tagsInput := &route53.ChangeTagsForResourceInput{
+		AddTags: []*route53.Tag{
+			{
+				Key:   aws.String("Name"),
+				Value: aws.String(s.scope.Name()),
+			},
+			{
+				Key:   aws.String(fmt.Sprintf("sigs.k8s.io/cluster-api-provider-aws/cluster/%s", s.scope.Name())),
+				Value: aws.String("owned"),
+			},
+			{
+				Key:   aws.String("sigs.k8s.io/cluster-api-provider-aws/role"),
+				Value: aws.String("common"),
+			},
+		},
+		ResourceId: o.HostedZone.Id,
+	}
+	_, err = s.Route53Client.ChangeTagsForResource(tagsInput)
+	if err != nil {
+		return errors.Wrapf(err, "failed to add tags to hosted zone for cluster for cluster %s", s.scope.Name())
 	}
 
 	return nil
