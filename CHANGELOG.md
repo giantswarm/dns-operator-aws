@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.1] - 2023-03-09
+
 ### Changed
 
 - Increase valid time for ignored vulnerabilities in `nancy`.
@@ -152,7 +154,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2021-10-14
 
 
-[Unreleased]: https://github.com/giantswarm/dns-operator-aws/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/giantswarm/dns-operator-aws/compare/v0.6.1...HEAD
+[0.6.1]: https://github.com/giantswarm/dns-operator-aws/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/giantswarm/dns-operator-aws/compare/v0.5.5...v0.6.0
 [0.5.5]: https://github.com/giantswarm/dns-operator-aws/compare/v0.5.4...v0.5.5
 [0.5.4]: https://github.com/giantswarm/dns-operator-aws/compare/v0.5.3...v0.5.4
