@@ -93,9 +93,6 @@ func (r *AWSClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	awsClusterRoleIdentity := &capa.AWSClusterRoleIdentity{}
 	err = r.Get(ctx, client.ObjectKey{Name: awsCluster.Spec.IdentityRef.Name}, awsClusterRoleIdentity)
 	if err != nil {
-		if apierrors.IsNotFound(err) {
-			return reconcile.Result{}, nil
-		}
 		return reconcile.Result{}, err
 	}
 	// Fetch bastion IP
@@ -156,9 +153,6 @@ func (r *AWSClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	awsManagementClusterRoleIdentity := &capa.AWSClusterRoleIdentity{}
 	err = r.Get(ctx, client.ObjectKey{Name: managementAWSCluster.Spec.IdentityRef.Name}, awsManagementClusterRoleIdentity)
 	if err != nil {
-		if apierrors.IsNotFound(err) {
-			return reconcile.Result{}, nil
-		}
 		return reconcile.Result{}, err
 	}
 
