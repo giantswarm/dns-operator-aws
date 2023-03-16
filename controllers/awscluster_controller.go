@@ -49,7 +49,6 @@ type AWSClusterReconciler struct {
 	ResolverRulesOwnerAccountId string
 	AssociateResolverRules      bool
 	Log                         logr.Logger
-	ManagementClusterARN        string
 	ManagementClusterBaseDomain string
 	ManagementClusterName       string
 	ManagementClusterNamespace  string
@@ -94,9 +93,6 @@ func (r *AWSClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	awsClusterRoleIdentity := &capa.AWSClusterRoleIdentity{}
 	err = r.Get(ctx, client.ObjectKey{Name: awsCluster.Spec.IdentityRef.Name}, awsClusterRoleIdentity)
 	if err != nil {
-		if apierrors.IsNotFound(err) {
-			return reconcile.Result{}, nil
-		}
 		return reconcile.Result{}, err
 	}
 	// Fetch bastion IP
@@ -153,9 +149,16 @@ func (r *AWSClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return reconcile.Result{}, err
 	}
 
+	// Fetch AWSClusterRole from the cluster.
+	awsManagementClusterRoleIdentity := &capa.AWSClusterRoleIdentity{}
+	err = r.Get(ctx, client.ObjectKey{Name: managementAWSCluster.Spec.IdentityRef.Name}, awsManagementClusterRoleIdentity)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
 	// Create the management cluster scope.
 	managementScope, err := scope.NewManagementClusterScope(scope.ManagementClusterScopeParams{
-		ARN:        r.ManagementClusterARN,
+		ARN:        awsManagementClusterRoleIdentity.Spec.RoleArn,
 		BaseDomain: r.ManagementClusterBaseDomain,
 		Logger:     log,
 		AWSCluster: &managementAWSCluster,

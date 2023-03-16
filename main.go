@@ -53,7 +53,6 @@ func main() {
 		enableLeaderElection        bool
 		metricsAddr                 string
 		workloadClusterBaseDomain   string
-		managementClusterARN        string
 		managementClusterBaseDomain string
 		managementClusterName       string
 		managementClusterNamespace  string
@@ -68,7 +67,6 @@ func main() {
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
 
 	flag.StringVar(&workloadClusterBaseDomain, "workload-cluster-basedomain", "", "Domain for workload cluster, e.g. installation.eu-west-1.aws.domain.tld")
-	flag.StringVar(&managementClusterARN, "management-cluster-arn", "", "Assumed role name for management cluster DNS zone delegation operation.")
 	flag.StringVar(&managementClusterBaseDomain, "management-cluster-basedomain", "", "Domain for management cluster, e.g. installation.eu-west-1.aws.domain.tld.")
 	flag.StringVar(&managementClusterName, "management-cluster-name", "", "Management cluster CR name.")
 	flag.StringVar(&managementClusterNamespace, "management-cluster-namespace", "", "Management cluster CR namespace.")
@@ -94,7 +92,6 @@ func main() {
 		ResolverRulesOwnerAccountId: resolverRulesOwnerAccountId,
 		AssociateResolverRules:      associateResolverRules,
 		Log:                         ctrl.Log.WithName("controllers").WithName("AWSCluster"),
-		ManagementClusterARN:        managementClusterARN,
 		ManagementClusterBaseDomain: managementClusterBaseDomain,
 		ManagementClusterName:       managementClusterName,
 		ManagementClusterNamespace:  managementClusterNamespace,
