@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Remove logic that associates resolver rules because it was moved to `aws-resolver-rules-operator`.
+
 ## [0.6.2] - 2023-03-16
 
 ### Changed
