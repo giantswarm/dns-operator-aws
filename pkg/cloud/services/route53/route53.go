@@ -2,13 +2,11 @@ package route53
 
 import (
 	"fmt"
-	"net"
 	"net/http"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/route53"
-	"github.com/aws/aws-sdk-go/service/route53resolver"
 	"github.com/pkg/errors"
 )
 
@@ -78,55 +76,6 @@ func (s *Service) ReconcileRoute53() error {
 			return nil
 		} else if err != nil {
 			return err
-		}
-	}
-
-	err = s.associateResolverRules()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// associateResolverRules takes all the resolver rules and try to associate them with the workload cluster VPC.
-func (s *Service) associateResolverRules() error {
-	if s.scope.AssociateResolverRules() {
-		resolverRules, err := s.listResolverRules()
-		if err != nil {
-			return errors.Wrap(err, "failed to list AWS Resolver rule")
-		}
-
-		associations, err := s.getResolverRuleAssociations(nil)
-		if err != nil {
-			return errors.Wrap(err, "failed to list AWS Resolver rules associations")
-		}
-		s.scope.Logger().Info("Got resolver rule associations", "associations", associations)
-
-		vpcCidr := s.scope.VPCCidr()
-		for _, rule := range resolverRules {
-			if !s.associationsHasRule(associations, rule) {
-
-				belong, err := ruleTargetsBelongToSubnet(rule.TargetIps, vpcCidr)
-				if err != nil {
-					s.scope.Logger().Error(err, "failed to check if the resolver rule belongs to the VPC", "ruleName", *rule.Name, "vpc", s.scope.VPC())
-					continue
-				}
-
-				if !belong {
-					s.scope.Logger().Info("No existing resolver rule association found, associating now", "rule", rule)
-					i := &route53resolver.AssociateResolverRuleInput{
-						Name:           rule.Name,
-						VPCId:          aws.String(s.scope.VPC()),
-						ResolverRuleId: rule.Id,
-					}
-					_, err = s.Route53ResolverClient.AssociateResolverRule(i)
-					if err != nil {
-						s.scope.Logger().Error(err, "failed to assign resolver rule to VPC", "ruleName", *rule.Name, "vpc", s.scope.VPC())
-						continue
-					}
-				}
-			}
 		}
 	}
 
@@ -455,111 +404,4 @@ func (s *Service) deleteWorkloadClusterZone(hostedZoneID string) error {
 		return errors.Wrapf(err, "failed to delete hosted zone for cluster: %s", s.scope.Name())
 	}
 	return nil
-}
-
-func (s *Service) getResolverRuleAssociations(nextToken *string) ([]*route53resolver.ResolverRuleAssociation, error) {
-	s.scope.Logger().Info("Fetching resolver rule associations", "nextToken", nextToken)
-	ruleAssociations := []*route53resolver.ResolverRuleAssociation{}
-
-	associations, err := s.Route53ResolverClient.ListResolverRuleAssociations(&route53resolver.ListResolverRuleAssociationsInput{
-		MaxResults: aws.Int64(100),
-		Filters: []*route53resolver.Filter{
-			{
-				Name:   aws.String("VPCId"),
-				Values: []*string{aws.String(s.scope.VPC())},
-			},
-		},
-		NextToken: nextToken,
-	})
-	if err != nil {
-		return ruleAssociations, errors.Wrap(err, "failed to list AWS Resolver rule associations")
-	}
-	ruleAssociations = append(ruleAssociations, associations.ResolverRuleAssociations...)
-
-	// If we have more than we can query in one call we need to recursively keep calling until we have all associations
-	if associations.NextToken != nil && *associations.NextToken != "" {
-		next, err := s.getResolverRuleAssociations(associations.NextToken)
-		if err != nil {
-			return ruleAssociations, errors.Wrap(err, "failed to list AWS Resolver rule associations")
-		}
-		ruleAssociations = append(ruleAssociations, next...)
-	}
-
-	return ruleAssociations, err
-}
-
-func (s *Service) associationsHasRule(associations []*route53resolver.ResolverRuleAssociation, rule *route53resolver.ResolverRule) bool {
-	for _, a := range associations {
-		if *a.ResolverRuleId == *rule.Id && (*a.Status == route53resolver.ResolverRuleAssociationStatusCreating || *a.Status == route53resolver.ResolverRuleAssociationStatusComplete) {
-			return true
-		}
-	}
-	return false
-}
-
-// listResolverRules fetches the resolver rules of type FORWARD. When an AWS account id is passed, only the rules
-// from that account will be listed.
-func (s *Service) listResolverRules() ([]*route53resolver.ResolverRule, error) {
-	var resolverRules, filteredRules []*route53resolver.ResolverRule
-	var resolverRulesInput *route53resolver.ListResolverRulesInput
-	var resolverRulesOutput *route53resolver.ListResolverRulesOutput
-	var err error
-
-	resolverRulesInput = &route53resolver.ListResolverRulesInput{
-		MaxResults: aws.Int64(100),
-		Filters: []*route53resolver.Filter{
-			{
-				Name:   aws.String("TYPE"),
-				Values: aws.StringSlice([]string{"FORWARD"}),
-			},
-		},
-	}
-	// Fetch first page of resolver rules.
-	resolverRulesOutput, err = s.Route53ResolverClient.ListResolverRules(resolverRulesInput)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to list resolver rules")
-	}
-
-	resolverRules = append(resolverRules, resolverRulesOutput.ResolverRules...)
-
-	// If the response contains `NexToken` we need to send another request with the response token to get the next page.
-	for resolverRulesOutput.NextToken != nil && *resolverRulesOutput.NextToken != "" {
-		resolverRulesInput.NextToken = resolverRulesOutput.NextToken
-		resolverRulesOutput, err = s.Route53ResolverClient.ListResolverRules(resolverRulesInput)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to list resolver rules")
-		}
-		resolverRules = append(resolverRules, resolverRulesOutput.ResolverRules...)
-	}
-
-	creatorID := s.scope.ResolverRulesCreatorAccount()
-	if creatorID != "" {
-		for _, rule := range resolverRules {
-			if *(rule.OwnerId) == creatorID {
-				filteredRules = append(filteredRules, rule)
-			}
-		}
-
-		return filteredRules, nil
-	}
-
-	return resolverRules, nil
-}
-
-// Checks if any of rule target IPs belongs to a CIDR range
-func ruleTargetsBelongToSubnet(targetIps []*route53resolver.TargetAddress, vpcCidr string) (bool, error) {
-	_, ipNetVpc, err := net.ParseCIDR(vpcCidr)
-	if err != nil {
-		return false, err
-	}
-
-	for _, targetIp := range targetIps {
-		ipIP := net.ParseIP(*targetIp.Ip)
-		if ipNetVpc.Contains(ipIP) {
-			return true, nil
-		}
-	}
-
-	return false, nil
-
 }
