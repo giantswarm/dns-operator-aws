@@ -1,7 +1,6 @@
 {
   "extends": [
-    "config:base",
-    ":reviewer(team:team-hydra)"
+    "config:base"
   ],
   "labels": ["dependencies", "renovate"],
   "packageRules": [
@@ -40,12 +39,21 @@
   "dependencyDashboard": true,
   "ignorePaths": [
     ".github/workflows/zz_generated.*",
-    ".github/workflows/codeql-analysis.yml"
+    ".github/workflows/codeql-analysis.yml",
+    ".github/workflows/pre_commit_*.yaml"
   ],
   "ignoreDeps": [
     "architect",
     "zricethezav/gitleaks-action",
     "actions/setup-go"
+  ],
+  "regexManagers": [
+    {
+      "fileMatch": ["^helm\\/.+\\/values\\.yaml$"],
+      "matchStrings": ["repo: (?<depName>.*)\n(\\s)*version: (?<currentValue>.*?)\n"],
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^v(?<version>.*)$"
+    }
   ],
   "schedule": [ "after 6am on thursday" ]
 }
